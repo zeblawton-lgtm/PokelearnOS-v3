@@ -1,0 +1,936 @@
+# PokéLearnOS — Hermes + Local Qwen + Replit Autonomous Build Goal
+
+## Purpose
+
+This file is the **Replit-optimized Hermes Agent goal** for building **PokéLearnOS** with a local Qwen 35B-class model as the primary AI implementation engine.
+
+Hermes acts as the CEO, orchestrator, memory keeper, task router, verifier, and repair-loop manager. Replit is used as the cloud development workspace, preview environment, task runner, and repository host. The local Qwen model is used for reasoning and code generation through an OpenAI-compatible endpoint, Ollama endpoint, vLLM endpoint, LM Studio endpoint, or another Hermes-supported local provider.
+
+This document is designed to be saved as `GOAL.md` inside the Replit project and used as the top-level autonomous mission for Hermes.
+
+The target behavior is:
+
+> Hermes must not stop after planning. Hermes must build the repository, write the app, write tests, write documentation, generate Replit configuration, create a reproducible ISO/export pipeline, run verification, repair failures, and drive the project as close to 100% completion as Replit safely allows.
+
+---
+
+# 1. Ready-to-Fire Hermes `/goal` Prompt for Replit
+
+Paste this into Hermes from the root of the Replit project:
+
+```text
+/goal You are the CEO, orchestrator, and autonomous build manager for PokéLearnOS running inside a Replit workspace.
+
+Do not use Codex. Use Hermes Agent with a local Qwen 35B-class model as the reasoning and implementation engine.
+
+Preferred local model:
+- Qwen3.6-35B-A3B or the closest available Qwen 35B-class local model.
+
+Allowed local inference backends:
+- Ollama exposed to Replit through a reachable endpoint
+- vLLM OpenAI-compatible endpoint
+- LM Studio local server exposed through a reachable endpoint
+- llama.cpp server exposed through a reachable endpoint
+- any OpenAI-compatible local Qwen endpoint
+
+Replit role:
+Use Replit as the primary cloud IDE, repo workspace, app preview host, and test runner. Generate all Replit configuration required for one-click development and preview.
+
+Mission:
+Build PokéLearnOS from 0 to 100 as a Replit-first repository: a Pokémon-themed educational kiosk application and reproducible Linux kiosk/ISO build package for a pre-validated Dell Inspiron 7306 2-in-1 touchscreen laptop. The app must run in Replit preview for development and also include scripts/configuration to package it into a kiosk ISO or deployable Linux image outside Replit.
+
+Important hardware rule:
+The Dell Inspiron 7306 hardware is already validated. Do not create a hardware validation phase. Do not ask the human to validate touchscreen, Wi-Fi, GPU, audio, storage, firmware, or sensors before continuing. Treat the hardware baseline as fixed input.
+
+Important Replit rule:
+Replit is the development and verification workspace. Do not assume Replit can safely perform privileged OS imaging, BIOS actions, raw USB writes, or destructive disk operations. Generate scripts and documentation for those actions, but do not block repository/application completion on physical flashing.
+
+Execution model:
+1. Create or update the repository in the current Replit workspace.
+2. Generate the full project scaffold.
+3. Generate `.replit`, `replit.nix`, and Replit workflow documentation.
+4. Build the local-first web application and backend.
+5. Configure app preview to run through Replit.
+6. Integrate local Qwen via environment variables and a provider abstraction.
+7. Build deterministic offline-first educational modules.
+8. Build local asset packaging and manifest generation.
+9. Build kiosk deployment scripts and ISO build scripts as reproducible artifacts.
+10. Run available tests in Replit.
+11. Enter repair loops until tests pass.
+12. Produce release docs, QA report, security report, and reproducible build instructions.
+13. Do not stop after planning.
+
+Autonomy rule:
+Make reasonable engineering decisions without asking the user unless the action requires private credentials, private/licensed assets, destructive disk writes, physical USB flashing, BIOS access, or privileged commands that Replit cannot safely run.
+
+Completion target:
+The Replit project is complete only when:
+- repository structure exists
+- `.replit` exists
+- `replit.nix` exists
+- app launches in Replit preview
+- frontend loads bundled local assets
+- backend starts locally in the workspace
+- SQLite initializes
+- two child profiles exist
+- timer enforcement works
+- rest screen appears after timeout
+- parent admin overlay works
+- Qwen/local LLM provider can be disabled without breaking the app
+- offline mode works using local assets
+- tests pass in Replit
+- kiosk deployment scripts exist
+- ISO build pipeline scripts exist
+- release docs exist
+- QA report exists
+- security report exists
+```
+
+---
+
+# 2. Replit Operating Model
+
+Replit is used for:
+
+- repository generation
+- source code editing
+- app preview
+- backend API testing
+- frontend smoke testing
+- SQLite initialization
+- asset manifest generation
+- unit and integration tests
+- documentation generation
+- Replit-native workflows
+- reproducible build orchestration
+
+Replit is **not** treated as the final OS imaging environment unless the workspace supports the required privileges. ISO generation may be implemented as scripts that run locally, in Docker, in a VM, or in a GitHub Actions runner.
+
+The project must therefore produce two execution paths:
+
+1. **Replit Development Path** — run and test the app in Replit preview.
+2. **Kiosk/ISO Release Path** — export the repository and run the ISO build scripts in an environment that supports privileged image creation.
+
+Do not let the ISO path block application development in Replit.
+
+---
+
+# 3. Target Hardware Baseline — Pre-Validated
+
+The target machine is fixed and already validated.
+
+| Component | Specification |
+|---|---|
+| Host Machine | Dell Inspiron 7306 2-in-1 |
+| CPU | 11th Gen Intel Core i7-1165G7 |
+| GPU | Intel Iris Xe Graphics |
+| Display | 13.3" touchscreen |
+| Native Resolution | 3840 × 2160 |
+| Required Scaling | 200% |
+| RAM | 16 GB |
+| Storage | 477 GB NVMe / Intel Optane SSD |
+| Wi-Fi | Intel Wi-Fi 6 AX201 |
+| Audio | Realtek Audio + Intel Smart Sound Technology |
+| Touch | HID-compliant touchscreen |
+| Sensors | HID sensor collection / orientation sensor present |
+| Firmware | UEFI |
+| Secure Boot | Capable / enabled in baseline inventory |
+| TPM | Present and ready |
+
+Rules:
+
+- Do not create a hardware validation phase.
+- Do not ask for driver validation before continuing.
+- Do not block on touchscreen, Wi-Fi, GPU, audio, storage, firmware, or sensor confirmation.
+- Build directly for this hardware profile.
+
+---
+
+# 4. Product Mission
+
+Build **PokéLearnOS**, a child-safe, Pokémon-themed educational kiosk experience for two children:
+
+- Child profile 1: 3-year-old
+- Child profile 2: 5-year-old
+
+The app must provide:
+
+- visual Pokémon-themed math learning
+- Spanish vocabulary practice
+- child-appropriate geography concepts
+- large touchscreen-friendly UI
+- offline-first local asset loading
+- local progress tracking
+- daily session limits
+- parent-only admin controls
+- optional local Qwen-powered feedback and parent summaries
+
+The app must function in Replit preview during development and later run as a locked-down kiosk application on the Dell laptop.
+
+---
+
+# 5. Core Stack for Replit
+
+Use a Replit-friendly stack that can also be packaged for Linux kiosk deployment.
+
+## Recommended v1 Stack
+
+- **Frontend:** HTML5, CSS, vanilla JavaScript, no heavy framework required
+- **Backend:** Python 3.12 + FastAPI
+- **Database:** SQLite
+- **Runtime preview:** Replit webview
+- **LLM integration:** provider abstraction using local Qwen endpoint when available
+- **Assets:** local bundled assets first, optional refresh script later
+- **Kiosk runtime:** Chromium kiosk on Linux target
+- **ISO/deploy pipeline:** scripts under `iso/` and `system/`
+
+The agent team may choose another stack only if it improves Replit compatibility and kiosk portability without increasing complexity.
+
+Avoid unnecessary dependencies.
+
+---
+
+# 6. Replit Required Files
+
+The repository must include:
+
+```text
+.replit
+replit.nix
+pyproject.toml
+requirements.txt or uv.lock
+README.md
+GOAL.md
+TASKS.md
+STATUS.md
+DECISIONS.md
+```
+
+## `.replit` Requirements
+
+The `.replit` file must define a run command that starts the backend and serves the frontend.
+
+Expected behavior:
+
+- click Run in Replit
+- backend starts on `0.0.0.0:$PORT` for Replit preview only
+- backend internally supports local-only binding for production/kiosk mode
+- frontend is reachable through Replit preview
+- health endpoint is available
+
+Important distinction:
+
+- In Replit development mode, binding to `0.0.0.0` may be required for preview.
+- In kiosk/production mode, the backend must bind to `127.0.0.1` only.
+
+This must be implemented through environment-aware configuration.
+
+Example environment toggle:
+
+```env
+APP_ENV=replit
+HOST=0.0.0.0
+PORT=8000
+```
+
+Production/kiosk mode:
+
+```env
+APP_ENV=kiosk
+HOST=127.0.0.1
+PORT=8765
+```
+
+---
+
+# 7. Local Qwen LLM Integration
+
+The application must not depend on cloud LLMs.
+
+Primary LLM target:
+
+```text
+Qwen3.6-35B-A3B or closest Qwen 35B-class local model
+```
+
+Provider endpoint examples:
+
+```env
+LLM_PROVIDER=qwen_local
+QWEN_BASE_URL=http://host.docker.internal:8000/v1
+QWEN_MODEL=qwen3.6-35b
+QWEN_API_KEY=not-required-for-local
+```
+
+Alternative endpoint examples:
+
+```env
+LLM_PROVIDER=ollama
+OLLAMA_HOST=http://your-local-host:11434
+OLLAMA_MODEL=qwen3.6:35b
+```
+
+Disabled mode must work:
+
+```env
+LLM_PROVIDER=none
+```
+
+LLM usage is limited to:
+
+- positive feedback variation
+- parent dashboard summaries
+- optional learning recommendations
+- optional Spanish phrasing support
+
+LLM must not be used for:
+
+- core math correctness
+- unrestricted child chat
+- API key exposure
+- internet-required gameplay
+- unsafe or age-inappropriate content
+
+Fallbacks must be deterministic.
+
+---
+
+# 8. Repository Structure
+
+Generate this Replit-optimized repository structure:
+
+```text
+pokelearnos/
+├── .replit
+├── replit.nix
+├── GOAL.md
+├── README.md
+├── TASKS.md
+├── STATUS.md
+├── DECISIONS.md
+├── Makefile
+├── .env.example
+├── .gitignore
+├── pyproject.toml
+├── app/
+│   ├── main.py                    # FastAPI entrypoint for Replit + kiosk
+│   ├── backend/
+│   │   ├── db.py
+│   │   ├── models.py
+│   │   ├── routes_profiles.py
+│   │   ├── routes_sessions.py
+│   │   ├── routes_admin.py
+│   │   ├── routes_llm.py
+│   │   ├── llm_manager.py
+│   │   ├── qwen_provider.py
+│   │   └── settings.py
+│   ├── db/
+│   │   ├── schema.sql
+│   │   └── migrations/
+│   ├── frontend/
+│   │   ├── index.html
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── sw.js
+│   ├── content/
+│   │   ├── math_3yo.json
+│   │   ├── math_5yo.json
+│   │   ├── geography.json
+│   │   ├── spanish.json
+│   │   └── feedback_fallbacks.json
+│   └── assets/
+│       ├── sprites/
+│       ├── sounds/
+│       └── manifest.json
+├── assets/
+│   └── reference_sprites/
+├── scripts/
+│   ├── dev.sh
+│   ├── run-tests.sh
+│   ├── generate-asset-manifest.py
+│   ├── seed-db.py
+│   ├── set-parent-pin.py
+│   └── export-release.sh
+├── system/
+│   ├── kiosk.service
+│   ├── kiosk-launcher.sh
+│   ├── autologin.conf
+│   ├── lockdown.sh
+│   └── parent-admin-exit.sh
+├── iso/
+│   ├── README.md
+│   ├── build-iso.sh
+│   ├── packages.list
+│   ├── chroot-customize.sh
+│   ├── copy-assets.sh
+│   └── overlay/
+├── tests/
+│   ├── backend/
+│   ├── frontend/
+│   ├── integration/
+│   └── security/
+├── docs/
+│   ├── architecture.md
+│   ├── replit-guide.md
+│   ├── qwen-local-setup.md
+│   ├── parent-guide.md
+│   ├── kiosk-deployment.md
+│   ├── iso-build-guide.md
+│   ├── troubleshooting.md
+│   ├── qa/
+│   ├── security/
+│   └── handoffs/
+└── dist/
+    ├── release-notes.md
+    └── checksums.txt
+```
+
+---
+
+# 9. Replit Workflow Commands
+
+The repository must support these commands:
+
+```bash
+make setup
+make dev
+make test
+make assets
+make seed
+make verify
+make export-release
+make iso
+```
+
+Expected command behavior:
+
+| Command | Purpose |
+|---|---|
+| `make setup` | install/setup dependencies |
+| `make dev` | run the Replit-compatible dev server |
+| `make test` | run backend, integration, and available frontend tests |
+| `make assets` | generate local asset manifest |
+| `make seed` | initialize SQLite with child profiles and default settings |
+| `make verify` | run tests + security checks + asset checks |
+| `make export-release` | package a release bundle from Replit |
+| `make iso` | run or document the ISO build path; may require local privileged environment |
+
+The Replit Run button should use the same logic as `make dev`.
+
+---
+
+# 10. Application Requirements
+
+## 10.1 Frontend
+
+The frontend must include:
+
+- full-screen child-facing interface
+- 4K/200% scaling aware layout
+- profile selection for two children
+- math module
+- geography module
+- Spanish module
+- large touch targets
+- sprite-based visual questions
+- countdown timer
+- rest screen
+- parent admin overlay
+- local asset loading
+- service worker/offline caching where supported
+
+Minimum touch target:
+
+```text
+88 × 88 px
+```
+
+Preferred touch target:
+
+```text
+120 × 120 px or larger
+```
+
+No critical controls in the top 80 px of the screen.
+
+## 10.2 Backend
+
+The backend must include APIs for:
+
+- profiles
+- sessions
+- attempts
+- stats
+- daily timer
+- admin authentication
+- parent dashboard
+- LLM feedback
+- LLM summary
+- health check
+
+## 10.3 SQLite
+
+SQLite must track:
+
+- child profiles
+- sessions
+- attempts
+- daily time limits
+- settings
+- progress summaries
+- asset metadata
+
+## 10.4 Session Timer
+
+Requirements:
+
+- default session: 15 minutes
+- configurable range: 10–30 minutes
+- separate tracking per child profile
+- rest screen after time expires
+- parent override only through PIN/admin overlay
+
+---
+
+# 11. Educational Content Requirements
+
+## Math
+
+3-year-old:
+
+- counting
+- visual addition
+- visual subtraction
+- quantity matching
+
+5-year-old:
+
+- addition
+- subtraction
+- introductory multiplication
+- simple word problems
+- pattern recognition
+
+## Geography
+
+Teach child-safe concepts:
+
+- continents
+- oceans
+- islands
+- mountains
+- forests
+- hot/cold regions
+- maps
+- near/far
+- north/south/east/west
+
+Do not present fictional Pokémon regions as real places.
+
+## Spanish
+
+Teach:
+
+- colors
+- numbers
+- greetings
+- basic phrases
+- matching games
+
+Example prompts:
+
+```text
+Which Pokémon is azul?
+How many Pikachu? ¿Cuántos Pikachu?
+Choose rojo.
+Hola, Pikachu.
+```
+
+---
+
+# 12. Multi-Agent Workstreams for Hermes + Qwen
+
+Hermes should run the project as isolated specialist workstreams. Because a local Qwen model may have smaller effective context and less reliability than frontier cloud models, each workstream must have strict file ownership, small task size, and validation loops.
+
+## 12.1 CEO / Orchestrator
+
+Owns:
+
+- `TASKS.md`
+- `STATUS.md`
+- `DECISIONS.md`
+- integration sequencing
+- repair loop routing
+
+Responsibilities:
+
+- break work into small tasks
+- avoid context overload
+- coordinate file ownership
+- run tests after integration
+- update status after each milestone
+- never stop at planning
+
+## 12.2 Replit Platform Agent
+
+Owns:
+
+- `.replit`
+- `replit.nix`
+- `Makefile`
+- `docs/replit-guide.md`
+
+Responsibilities:
+
+- make the project run with the Replit Run button
+- expose preview correctly
+- document environment variables
+- separate Replit dev mode from kiosk mode
+
+## 12.3 Frontend Agent
+
+Owns:
+
+- `app/frontend/`
+- frontend tests
+
+Responsibilities:
+
+- build child-facing UI
+- implement modules
+- implement timer/rest screen
+- implement admin overlay
+- integrate local assets
+
+## 12.4 Backend Agent
+
+Owns:
+
+- `app/main.py`
+- `app/backend/`
+- `app/db/`
+- backend tests
+
+Responsibilities:
+
+- build FastAPI server
+- implement SQLite
+- implement session/timer/profile APIs
+- implement admin APIs
+
+## 12.5 Qwen LLM Agent
+
+Owns:
+
+- `app/backend/llm_manager.py`
+- `app/backend/qwen_provider.py`
+- `docs/qwen-local-setup.md`
+
+Responsibilities:
+
+- implement provider abstraction
+- support Qwen endpoint
+- support disabled mode
+- implement deterministic fallbacks
+- enforce child-safe outputs
+
+## 12.6 Content Agent
+
+Owns:
+
+- `app/content/`
+- content schemas/tests
+
+Responsibilities:
+
+- build math templates
+- build geography content
+- build Spanish content
+- build feedback fallbacks
+
+## 12.7 Asset Agent
+
+Owns:
+
+- `assets/reference_sprites/`
+- `app/assets/manifest.json`
+- `scripts/generate-asset-manifest.py`
+
+Responsibilities:
+
+- index local assets
+- generate manifest
+- ensure offline behavior
+- create fallback placeholder mapping
+
+## 12.8 Kiosk/ISO Agent
+
+Owns:
+
+- `system/`
+- `iso/`
+- `docs/kiosk-deployment.md`
+- `docs/iso-build-guide.md`
+
+Responsibilities:
+
+- create kiosk launcher
+- create systemd service
+- create lockdown scripts
+- create ISO build pipeline
+- document local/privileged build path
+
+## 12.9 QA/Security Agent
+
+Owns:
+
+- `tests/`
+- `docs/qa/`
+- `docs/security/`
+
+Responsibilities:
+
+- run tests
+- validate offline mode
+- validate secrets safety
+- validate Replit dev mode vs kiosk mode
+- validate no cloud dependency
+- write final reports
+
+---
+
+# 13. Autonomous Execution Rules for Local Qwen
+
+Because local Qwen may be less reliable on very large tasks, Hermes must enforce:
+
+- small tasks
+- one subsystem per task
+- file ownership boundaries
+- frequent tests
+- repair loops
+- status updates
+- no giant one-shot code generation
+- no broad rewrites without orchestrator approval
+
+Every workstream must output:
+
+```text
+Files changed:
+Verification command:
+Known gaps:
+Next recommended task:
+```
+
+Hermes must update `STATUS.md` after every major milestone.
+
+---
+
+# 14. Replit Development Environment Variables
+
+`.env.example` must include:
+
+```env
+APP_ENV=replit
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:///./data/pokelearnos.db
+PARENT_PIN_HASH=
+
+LLM_PROVIDER=none
+QWEN_BASE_URL=http://localhost:8000/v1
+QWEN_MODEL=qwen3.6-35b
+QWEN_API_KEY=local-not-required
+
+SESSION_DEFAULT_MINUTES=15
+SESSION_MIN_MINUTES=10
+SESSION_MAX_MINUTES=30
+ASSET_MANIFEST_PATH=app/assets/manifest.json
+```
+
+The app must run with `LLM_PROVIDER=none`.
+
+---
+
+# 15. Testing and Verification
+
+The test suite must verify:
+
+- backend starts
+- health endpoint works
+- SQLite initializes
+- profiles exist
+- session start/end works
+- attempts are logged
+- timer expiration works
+- rest screen state is returned
+- admin auth blocks unauthorized access
+- LLM disabled mode returns deterministic fallback
+- Qwen provider handles unreachable endpoint gracefully
+- local asset manifest loads
+- no runtime dependency on PokéAPI
+- no secrets in tracked files
+- Replit mode can bind to preview host
+- kiosk mode uses loopback binding
+
+Required reports:
+
+```text
+docs/qa/replit-test-report.md
+docs/security/security-report.md
+docs/qa/release-gate.md
+```
+
+---
+
+# 16. Kiosk and ISO Packaging Requirements
+
+Even though Replit is the development environment, the repository must include a kiosk/ISO path.
+
+Required artifacts:
+
+```text
+system/kiosk.service
+system/kiosk-launcher.sh
+system/lockdown.sh
+system/autologin.conf
+iso/build-iso.sh
+iso/packages.list
+iso/chroot-customize.sh
+iso/copy-assets.sh
+iso/README.md
+```
+
+The ISO build script must target:
+
+```text
+dist/pokelearnos.iso
+```
+
+If Replit cannot build the ISO due to privilege limits, the script must fail clearly with instructions for local execution.
+
+This is acceptable:
+
+```text
+ISO pipeline generated and reproducible; run locally with Docker/VM privileges to produce dist/pokelearnos.iso.
+```
+
+This is not acceptable:
+
+```text
+TODO: build ISO later.
+```
+
+---
+
+# 17. Release Gate
+
+The project is complete only when all release gates pass.
+
+## Replit Software Release Gate
+
+- [ ] Replit Run starts the app.
+- [ ] Preview loads the frontend.
+- [ ] Backend health endpoint works.
+- [ ] SQLite initializes.
+- [ ] Two child profiles exist.
+- [ ] Local assets load.
+- [ ] Math module works.
+- [ ] Geography module works.
+- [ ] Spanish module works.
+- [ ] Timer works.
+- [ ] Rest screen appears.
+- [ ] Parent overlay works.
+- [ ] LLM disabled mode works.
+- [ ] Qwen unreachable fallback works.
+- [ ] Tests pass.
+- [ ] QA report exists.
+- [ ] Security report exists.
+
+## Kiosk/ISO Release Gate
+
+- [ ] Kiosk scripts exist.
+- [ ] systemd service exists.
+- [ ] lockdown script exists.
+- [ ] ISO build script exists.
+- [ ] asset copy script exists.
+- [ ] package list exists.
+- [ ] ISO build guide exists.
+- [ ] local execution path is documented.
+- [ ] `dist/release-notes.md` exists.
+- [ ] `dist/checksums.txt` is generated when artifacts exist.
+
+---
+
+# 18. Documentation Requirements
+
+Generate:
+
+```text
+README.md
+docs/replit-guide.md
+docs/qwen-local-setup.md
+docs/architecture.md
+docs/parent-guide.md
+docs/kiosk-deployment.md
+docs/iso-build-guide.md
+docs/troubleshooting.md
+docs/qa/replit-test-report.md
+docs/security/security-report.md
+dist/release-notes.md
+```
+
+Docs must explain:
+
+- how to run in Replit
+- how to connect Replit to local Qwen endpoint
+- how to disable LLM
+- how to seed the database
+- how to use the parent dashboard
+- how to export the release bundle
+- how to build the kiosk/ISO outside Replit
+- how to deploy to the Dell laptop
+
+---
+
+# 19. No-Human-Intervention Policy
+
+Hermes must complete all work that can be completed in Replit without asking for human intervention.
+
+Do not ask the user to choose implementation details that can be reasonably decided.
+
+Human intervention is only acceptable for:
+
+- providing private API keys
+- supplying private/licensed image assets
+- exposing the local Qwen endpoint to Replit
+- physically flashing USB media
+- physically booting the Dell laptop
+- BIOS/UEFI interaction
+- destructive disk imaging
+- privileged OS image creation that Replit cannot perform
+
+Even when human intervention is required, Hermes must still generate scripts and documentation.
+
+---
+
+# 20. Final Instruction to Hermes
+
+Do not stop at a plan.
+
+Build the Replit project.
+
+Run the app.
+
+Run tests.
+
+Fix failures.
+
+Write documentation.
+
+Generate release artifacts.
+
+Create the kiosk/ISO pipeline.
+
+Update `STATUS.md` continuously.
+
+Stop only when the Replit Software Release Gate passes and the Kiosk/ISO Release Gate is fully generated and documented, or when a true non-automatable blocker is reached.

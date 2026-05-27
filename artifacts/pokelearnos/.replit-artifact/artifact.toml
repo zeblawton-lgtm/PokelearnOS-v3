@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "PokelearnOS"
+version = "1.0.0"
+id = "artifacts/pokelearnos"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25708
+
+[services.development]
+run = "pnpm --filter @workspace/pokelearnos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pokelearnos", "run", "build" ]
+publicDir = "artifacts/pokelearnos/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25708"
+BASE_PATH = "/"

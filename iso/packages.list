@@ -1,0 +1,52 @@
+# PokelearnOS Required Packages
+# Ubuntu 24.04 LTS (Noble) base package list for kiosk deployment
+
+# Kernel and boot
+linux-image-generic
+live-boot
+systemd-sysv
+grub-pc-bin
+grub-efi-amd64-bin
+
+# Display
+xorg
+xserver-xorg-video-intel
+xserver-xorg-input-synaptics
+xserver-xorg-input-evdev
+openbox
+lightdm
+unclutter
+
+# Browser
+chromium-browser
+
+# Runtime
+nodejs
+npm
+
+# Audio (Intel Smart Sound Technology)
+pulseaudio
+alsa-utils
+sof-firmware
+
+# Wi-Fi (Intel AX201)
+firmware-iwlwifi
+wireless-tools
+wpasupplicant
+network-manager
+
+# Fonts
+fonts-noto
+fonts-noto-color-emoji
+fonts-liberation
+
+# Utilities
+curl
+wget
+sqlite3
+xdg-utils
+xdotool
+ca-certificates
+
+# Security
+ufw

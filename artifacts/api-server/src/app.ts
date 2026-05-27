@@ -1,0 +1,71 @@
+import path from "node:path";
+import fs from "node:fs";
+import express, { type Express } from "express";
+import cors from "cors";
+import pinoHttp from "pino-http";
+import router from "./routes";
+import { logger } from "./lib/logger";
+
+const app: Express = express();
+
+app.use(
+  pinoHttp({
+    logger,
+    serializers: {
+      req(req) {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url?.split("?")[0],
+        };
+      },
+      res(res) {
+        return {
+          statusCode: res.statusCode,
+        };
+      },
+    },
+  }),
+);
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", router);
+
+// ---------------------------------------------------------------------------
+// Kiosk / production static file serving
+//
+// In kiosk mode (APP_ENV=kiosk or NODE_ENV=production) the Express server
+// serves the Vite-built frontend at "/". The install.sh deploys the Vite
+// build output to $POKELEARNOS_INSTALL/web/ (default /opt/pokelearnos/web/).
+//
+// In development, Vite's own dev server serves the frontend; this block is
+// not active.
+// ---------------------------------------------------------------------------
+const isKiosk =
+  process.env["APP_ENV"] === "kiosk" ||
+  process.env["NODE_ENV"] === "production";
+
+if (isKiosk) {
+  const webDir =
+    process.env["POKELEARNOS_WEB_DIR"] ??
+    path.join(
+      process.env["POKELEARNOS_INSTALL"] ?? path.join(__dirname, "../../.."),
+      "web",
+    );
+
+  if (fs.existsSync(webDir)) {
+    app.use(express.static(webDir));
+    // SPA catch-all: any path that doesn't match an API route or static file
+    // returns index.html so React Router can handle client-side navigation.
+    app.get("*", (_req, res) => {
+      res.sendFile(path.join(webDir, "index.html"));
+    });
+    logger.info({ webDir }, "Serving static frontend from disk");
+  } else {
+    logger.warn({ webDir }, "Kiosk mode: web dir not found — frontend not served");
+  }
+}
+
+export default app;

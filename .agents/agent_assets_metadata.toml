@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "gzNvaqaH1Qq-EPnJ3ewa5"
+uri = "file://artifacts/pokelearnos/public/logo.png"
+type = "image"
+title = "PokelearnOS Logo"
