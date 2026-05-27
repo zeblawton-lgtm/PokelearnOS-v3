@@ -1,0 +1,3 @@
+# PokéLearnOS v3
+
+Initializing...
