@@ -58,3 +58,6 @@ Thumbs.db
 *.sqlite
 *.sqlite-*
 *.db
+
+# stray bundle
+*.bundle
