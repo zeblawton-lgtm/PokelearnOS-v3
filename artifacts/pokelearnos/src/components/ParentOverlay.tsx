@@ -4,6 +4,8 @@ import { X, Plus, Minus, LogOut } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { api } from "@/lib/api";
 import { useLocation } from "wouter";
+import { isMuted, setMuted } from "@/lib/sound";
+import { isMusicMuted, setMusicMuted } from "@/lib/music";
 
 type Mode = "pin" | "settings";
 
@@ -13,6 +15,8 @@ export function ParentOverlay() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [soundOff, setSoundOff] = useState(isMuted());
+  const [musicOff, setMusicOff] = useState(isMusicMuted());
   const [, navigate] = useLocation();
 
   const handleClose = () => {
@@ -98,6 +102,23 @@ export function ParentOverlay() {
               </>
             ) : (
               <div className="flex flex-col gap-4">
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-base font-bold text-gray-500 mb-3">Audio</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { const v = !musicOff; setMusicMuted(v); setMusicOff(v); }}
+                      className={`flex-1 py-3 rounded-2xl text-base font-black min-h-[56px] ${musicOff ? "bg-gray-200 text-gray-500" : "bg-pokemon-blue text-white"}`}
+                    >
+                      Music: {musicOff ? "Off" : "On"}
+                    </button>
+                    <button
+                      onClick={() => { const v = !soundOff; setMuted(v); setSoundOff(v); }}
+                      className={`flex-1 py-3 rounded-2xl text-base font-black min-h-[56px] ${soundOff ? "bg-gray-200 text-gray-500" : "bg-pokemon-blue text-white"}`}
+                    >
+                      Sounds: {soundOff ? "Off" : "On"}
+                    </button>
+                  </div>
+                </div>
                 <div className="bg-gray-50 rounded-2xl p-4">
                   <p className="text-base font-bold text-gray-500 mb-2">Extend Today's Time</p>
                   <div className="flex items-center gap-3">

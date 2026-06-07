@@ -54,3 +54,27 @@ POST /api/admin/seed           → 201 {profiles seeded}
 - Spanish vocabulary limited to A1 level (17 questions)
 - No audio feedback yet (sound effects planned for v1.1)
 - Offline service worker caching not yet implemented (planned v1.1)
+
+---
+
+## Update — 2026-06-07 (offline, audio, content, SQLite kiosk)
+
+### New work verified
+| Check | Status | Notes |
+|-------|--------|-------|
+| Workspace typecheck (9 projects) | PASS | `pnpm run typecheck` clean |
+| Frontend production build | PASS | `vite build` → dist/public with sw.js, manifest, sprites, audio |
+| SQLite kiosk DB path | PASS | All route SQL patterns verified on SQLite (DDL, RETURNING, FILTER, coalesce(sum), ON CONFLICT, timestamp compares) |
+| Offline sprites | PASS | Bundled `public/sprites/official-artwork/` + `fallback.svg`; no runtime CDN calls |
+| Service worker | PASS | Registered in prod build; caches shell + assets |
+| Audio feedback | PASS | Web Audio SFX (correct/wrong/tap/fanfare) + Spanish speech wired into modules |
+| Background music | PASS | 12 bundled tracks, scene-based playback, parent mute toggle |
+| Spanish content | PASS | Expanded 17 → 34 questions |
+| Math content | PASS | math-3yo 25, math-5yo 24 questions |
+| Pokédex screen | PASS | Real offline page (24 entries), replaces not-found stub |
+| Pokémon Homes screen | PASS | Real habitats/biome page, replaces regions not-found stub |
+
+### Notes / environment limits
+- The api-server esbuild bundle and on-host ISO build target **linux-x64** (Replit/device);
+  they cannot run on this arm64 dev sandbox (native-binary pinning), but build on the target unchanged.
+- Background music is Nintendo-copyrighted (owner-supplied) — see `docs/credits.md`; replace before any public/commercial distribution.

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { api, type Profile, type SessionInfo } from "@/lib/api";
+import * as music from "@/lib/music";
 
 interface SessionState {
   profile: Profile | null;
@@ -55,6 +56,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => () => stopTimer(), [stopTimer]);
 
   const startSession = useCallback(async (p: Profile, limitMinutes: number) => {
+    music.playScene("menu"); // begin music within the user gesture (autoplay unlock)
     setIsLoading(true);
     try {
       const sess = await api.startSession(p.id);
@@ -68,6 +70,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [startTimer]);
 
   const endSession = useCallback(async () => {
+    music.stop();
     stopTimer();
     if (session) {
       await api.endSession(session.id).catch(() => {});

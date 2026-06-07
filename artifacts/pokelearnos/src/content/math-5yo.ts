@@ -43,6 +43,11 @@ export const math5YoQuestions: Math5YoQuestion[] = [
   { id: "w02", type: "word", pokemonId: p(1).id, pokemonName: "Eevee", wordProblem: "Eevee caught 5 fish in the morning and 7 in the afternoon. How many total?", answer: 12, choices: [11, 12, 13] },
   { id: "w03", type: "word", pokemonId: p(3).id, pokemonName: "Snorlax", wordProblem: "Snorlax is sleeping in 3 fields. Each field has 4 flowers. How many flowers?", answer: 12, choices: [11, 12, 13] },
   { id: "w04", type: "word", pokemonId: p(7).id, pokemonName: "Meowth", wordProblem: "Meowth has 9 coins. She gives 4 to a friend. How many does she have now?", answer: 5, choices: [4, 5, 6] },
+  { id: "m04", type: "multiply", pokemonId: p(6).id, pokemonName: p(6).name, a: 4, b: 2, answer: 8, choices: [6, 8, 10] },
+  { id: "m05", type: "multiply", pokemonId: p(7).id, pokemonName: p(7).name, a: 5, b: 2, answer: 10, choices: [10, 12, 8] },
+  { id: "a07", type: "add", pokemonId: p(0).id, pokemonName: p(0).name, a: 11, b: 6, answer: 17, choices: [16, 17, 18] },
+  { id: "s06", type: "subtract", pokemonId: p(3).id, pokemonName: p(3).name, a: 16, b: 9, answer: 7, choices: [6, 7, 8] },
+  { id: "w07", type: "word", pokemonId: p(3).id, pokemonName: p(3).name, wordProblem: "Snorlax ate 6 berries, then 3 more. How many berries?", answer: 9, choices: [8, 9, 10] },
 ];
 
 export function getQuestionPrompt(q: Math5YoQuestion): string {

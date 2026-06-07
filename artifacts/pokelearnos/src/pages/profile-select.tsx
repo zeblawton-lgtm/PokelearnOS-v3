@@ -1,10 +1,12 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { api, type Profile } from "@/lib/api";
 import { useSession } from "@/context/SessionContext";
+import { playTap } from "@/lib/sound";
 
-const SPRITE = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const SPRITE = ARTWORK;
 
 export default function ProfileSelect() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -23,6 +25,7 @@ export default function ProfileSelect() {
   }, []);
 
   const handleSelect = async (profile: Profile) => {
+    playTap();
     await startSession(profile, profile.dailyLimitMinutes);
     navigate("/home");
   };

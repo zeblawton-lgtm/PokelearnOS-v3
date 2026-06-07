@@ -1,3 +1,4 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
@@ -17,8 +18,7 @@ const MODULE_META: Record<string, { label: string; color: string }> = {
   geography: { label: "World Explorer", color: "bg-green-500" },
 };
 
-const SPRITE = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const SPRITE = ARTWORK;
 
 export default function Progress() {
   const { profile } = useSession();

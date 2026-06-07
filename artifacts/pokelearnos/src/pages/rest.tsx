@@ -1,11 +1,11 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@/context/SessionContext";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
 
-const SPRITE = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const SPRITE = ARTWORK;
 
 export default function RestScreen() {
   const { profile, extendSession, endSession } = useSession();

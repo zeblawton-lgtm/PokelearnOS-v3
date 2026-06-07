@@ -43,6 +43,12 @@ export const math3YoQuestions: Math3YoQuestion[] = [
   { id: "s03", type: "subtract", pokemonId: p(2).id, pokemonName: p(2).name, a: 5, b: 2, answer: 3, choices: [2, 3, 4] },
   { id: "s04", type: "subtract", pokemonId: p(3).id, pokemonName: p(3).name, a: 5, b: 3, answer: 2, choices: [1, 2, 3] },
   { id: "s05", type: "subtract", pokemonId: p(7).id, pokemonName: p(7).name, a: 4, b: 1, answer: 3, choices: [2, 3, 4] },
+  { id: "c09", type: "count", pokemonId: p(2).id, pokemonName: p(2).name, count: 1, answer: 1, choices: [1, 2, 3] },
+  { id: "c10", type: "count", pokemonId: p(3).id, pokemonName: p(3).name, count: 5, answer: 5, choices: [4, 5, 6] },
+  { id: "a07", type: "add", pokemonId: p(7).id, pokemonName: p(7).name, a: 2, b: 1, answer: 3, choices: [2, 3, 4] },
+  { id: "a08", type: "add", pokemonId: p(2).id, pokemonName: p(2).name, a: 0, b: 2, answer: 2, choices: [1, 2, 3] },
+  { id: "s06", type: "subtract", pokemonId: p(0).id, pokemonName: p(0).name, a: 5, b: 2, answer: 3, choices: [2, 3, 4] },
+  { id: "s07", type: "subtract", pokemonId: p(1).id, pokemonName: p(1).name, a: 3, b: 3, answer: 0, choices: [0, 1, 2] },
 ];
 
 export function getQuestionPrompt(q: Math3YoQuestion): string {

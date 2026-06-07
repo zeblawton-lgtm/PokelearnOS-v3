@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
@@ -10,9 +11,12 @@ import SpanishPage from "@/pages/spanish";
 import GeographyPage from "@/pages/geography";
 import RestScreen from "@/pages/rest";
 import Progress from "@/pages/progress";
+import PokedexPage from "@/pages/pokedex";
+import RegionsPage from "@/pages/regions";
 import NotFound from "@/pages/not-found";
 import { ParentOverlay } from "@/components/ParentOverlay";
 import { TimerBar } from "@/components/TimerBar";
+import * as music from "@/lib/music";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 10, retry: 1 } },
@@ -21,6 +25,13 @@ const queryClient = new QueryClient({
 function AppRoutes() {
   const { profile, isResting } = useSession();
   const [location] = useLocation();
+
+  useEffect(() => {
+    if (!profile) { music.stop(); return; }
+    if (isResting) { music.playScene("rest"); return; }
+    if (["/math", "/spanish", "/geography"].includes(location)) music.playScene("learn");
+    else music.playScene("menu");
+  }, [profile, isResting, location]);
 
   if (isResting) return <RestScreen />;
   if (!profile) return <ProfileSelect />;
@@ -36,6 +47,8 @@ function AppRoutes() {
             <Route path="/spanish" component={SpanishPage} />
             <Route path="/geography" component={GeographyPage} />
             <Route path="/progress" component={Progress} />
+            <Route path="/pokedex" component={PokedexPage} />
+            <Route path="/regions" component={RegionsPage} />
             <Route path="/" component={Home} />
             <Route component={NotFound} />
           </Switch>

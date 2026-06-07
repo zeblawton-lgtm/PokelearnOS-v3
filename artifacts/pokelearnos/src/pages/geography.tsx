@@ -1,3 +1,6 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
+import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
+import { playJingle } from "@/lib/music";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -5,8 +8,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { geographyQuestions } from "@/content/geography";
 
-const SPRITE = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+const SPRITE = ARTWORK;
 
 const TYPE_LABEL: Record<string, string> = {
   continent: "Continent",
@@ -42,11 +44,12 @@ export default function GeographyPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
+    if (correct) playCorrect(); else playWrong();
     if (correct) setScore(s => s + 1);
     await logAttempt("geography", q.id, correct);
     setShowHint(false);
     setTimeout(() => {
-      if (idx + 1 >= questions.length) setDone(true);
+      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
       else { setIdx(i => i + 1); setSelected(null); }
     }, 1200);
   }, [selected, q, idx, questions.length, logAttempt]);

@@ -47,3 +47,14 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Secrets / local env (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Local SQLite databases
+*.sqlite
+*.sqlite-*
+*.db

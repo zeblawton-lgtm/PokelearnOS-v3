@@ -1,0 +1,133 @@
+// ---------------------------------------------------------------------------
+// Background music manager.
+//
+// Plays the bundled (offline) Wii-style soundtrack as gentle, looping
+// background music, chosen by "scene". Tracks live in public/audio/ and are
+// served from the app's own origin, so music works fully offline.
+//
+// Autoplay policy: playback can only begin after a user gesture, so the first
+// scene is started from the profile-tap handler (see SessionContext).
+// ---------------------------------------------------------------------------
+
+const BASE: string =
+  (typeof import.meta !== "undefined" &&
+    (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL) ||
+  "/";
+const root = BASE.endsWith("/") ? BASE : BASE + "/";
+
+export type Scene = "menu" | "learn" | "rest";
+
+// Curated mapping of scene -> looping playlist (filenames in public/audio).
+const SCENES: Record<Scene, string[]> = {
+  menu: ["main-menu", "mii-channel", "mii-plaza", "wii-play-title"],
+  learn: ["mii-parade", "training-menu", "mii-channel"],
+  rest: ["yoga"],
+};
+
+const MUTE_KEY = "pokelearn_music_muted";
+
+let bg: HTMLAudioElement | null = null;
+let jingle: HTMLAudioElement | null = null;
+let scene: Scene | null = null;
+let playlist: string[] = [];
+let idx = 0;
+let volume = 0.32;
+let muted = readMuted();
+
+function readMuted(): boolean {
+  try {
+    return localStorage.getItem(MUTE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function track(name: string): string {
+  return `${root}audio/${name}.mp3`;
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function bgEl(): HTMLAudioElement {
+  if (!bg) {
+    bg = new Audio();
+    bg.preload = "auto";
+    bg.volume = volume;
+    bg.addEventListener("ended", playNext);
+  }
+  return bg;
+}
+
+function playNext() {
+  if (!playlist.length) return;
+  idx = (idx + 1) % playlist.length;
+  const a = bgEl();
+  a.src = track(playlist[idx]);
+  a.loop = playlist.length === 1;
+  if (!muted) void a.play().catch(() => {});
+}
+
+// Switch background music to a scene's playlist. Idempotent per scene.
+export function playScene(s: Scene) {
+  if (s === scene) {
+    if (!muted && bg && bg.paused) void bg.play().catch(() => {});
+    return;
+  }
+  scene = s;
+  playlist = shuffle(SCENES[s]);
+  idx = 0;
+  const a = bgEl();
+  a.src = track(playlist[0]);
+  a.loop = playlist.length === 1;
+  a.currentTime = 0;
+  if (!muted) void a.play().catch(() => {});
+}
+
+// Play a short celebratory jingle over ducked background music.
+export function playJingle(name: "results" | "result-display" = "result-display") {
+  if (muted) return;
+  if (!jingle) {
+    jingle = new Audio();
+    jingle.volume = Math.min(1, volume + 0.25);
+    jingle.addEventListener("ended", () => {
+      if (bg) bg.volume = volume;
+    });
+  }
+  if (bg) bg.volume = volume * 0.4; // duck
+  jingle.src = track(name);
+  jingle.currentTime = 0;
+  void jingle.play().catch(() => {});
+}
+
+export function stop() {
+  scene = null;
+  if (bg) {
+    bg.pause();
+    bg.currentTime = 0;
+  }
+}
+
+export function setMusicMuted(value: boolean) {
+  muted = value;
+  try {
+    localStorage.setItem(MUTE_KEY, value ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+  if (muted) {
+    if (bg) bg.pause();
+  } else if (scene) {
+    if (bg && bg.paused) void bg.play().catch(() => {});
+  }
+}
+
+export function isMusicMuted(): boolean {
+  return muted;
+}
+
+export function setVolume(v: number) {
+  volume = Math.max(0, Math.min(1, v));
+  if (bg) bg.volume = volume;
+}

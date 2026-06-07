@@ -1,3 +1,6 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
+import { playCorrect, playWrong, playFanfare, speak } from "@/lib/sound";
+import { playJingle } from "@/lib/music";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -5,8 +8,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { spanishQuestions } from "@/content/spanish";
 
-const SPRITE = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+const SPRITE = ARTWORK;
 
 const COLOR_CLASSES: Record<string, string> = {
   rojo: "bg-red-400",
@@ -17,7 +19,7 @@ const COLOR_CLASSES: Record<string, string> = {
 };
 const COLOR_POKEMON: Record<string, number> = {
   Charmander: 4, Squirtle: 7, Pikachu: 25, Bulbasaur: 1, Jigglypuff: 39,
-  Eevee: 133, Meowth: 52,
+  Eevee: 133, Meowth: 52, Charizard: 6, Gengar: 94, Umbreon: 197,
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -40,11 +42,12 @@ export default function SpanishPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
+    if (correct) { playCorrect(); if (q.spanishWord) speak(q.spanishWord); } else playWrong();
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);
     setTimeout(() => {
-      if (idx + 1 >= questions.length) setDone(true);
+      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
       else { setIdx(i => i + 1); setSelected(null); }
     }, 1200);
   }, [selected, q, idx, questions.length, logAttempt]);

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useSession } from "@/context/SessionContext";
-import { BookOpen, Globe, MessageCircle, Trophy } from "lucide-react";
+import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map } from "lucide-react";
 
 const modules = [
   { id: "math", label: "Math", sublabel: "Count, Add, Subtract", icon: BookOpen, color: "bg-pokemon-red", path: "/math" },
@@ -49,6 +49,27 @@ export default function Home() {
             </motion.button>
           );
         })}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mt-5">
+        <motion.button
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate("/pokedex")}
+          className="bg-pokemon-yellow/90 rounded-3xl py-5 flex flex-col items-center justify-center gap-1 shadow-md min-h-[96px]"
+        >
+          <Sparkles size={28} className="text-pokemon-darkred" />
+          <span className="text-xl font-black text-pokemon-darkred">Pokédex</span>
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate("/regions")}
+          className="bg-green-400 rounded-3xl py-5 flex flex-col items-center justify-center gap-1 shadow-md min-h-[96px]"
+        >
+          <Map size={28} className="text-white" />
+          <span className="text-xl font-black text-white">Pokémon Homes</span>
+        </motion.button>
       </div>
 
       <motion.button

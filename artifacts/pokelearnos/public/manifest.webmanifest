@@ -1,0 +1,16 @@
+{
+  "name": "PokéLearnOS",
+  "short_name": "PokéLearn",
+  "description": "A Pokémon-themed offline learning kiosk for young children.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#fde047",
+  "theme_color": "#ef4444",
+  "icons": [
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

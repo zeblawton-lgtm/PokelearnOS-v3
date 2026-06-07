@@ -1,3 +1,6 @@
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
+import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
+import { playJingle } from "@/lib/music";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -6,8 +9,7 @@ import { useSession } from "@/context/SessionContext";
 import { math3YoQuestions, type Math3YoQuestion } from "@/content/math-3yo";
 import { math5YoQuestions, type Math5YoQuestion } from "@/content/math-5yo";
 
-const SPRITE = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+const SPRITE = ARTWORK;
 
 const POKEMON_POOL = [
   { id: 25, name: "Pikachu" },
@@ -234,11 +236,12 @@ export default function MathPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
+    if (correct) playCorrect(); else playWrong();
     if (correct) { setScore(s => s + 1); setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);
     setTimeout(() => {
-      if (idx + 1 >= questions.length) setDone(true);
+      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
       else { setIdx(i => i + 1); setSelected(null); }
     }, 1100);
   }, [selected, q, idx, questions.length, logAttempt]);
