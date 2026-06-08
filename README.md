@@ -21,6 +21,7 @@ pnpm --filter @workspace/api-server build
 ## Deploy to the kiosk
 
 - Fresh machine: build the bootable image with `sudo bash iso/build-iso.sh` and flash `dist/pokelearnos.iso`, or run `scripts/install.sh` on an existing Ubuntu install.
+- Update an installed kiosk: `sudo bash scripts/update.sh` (pull → build → rsync → restart; data preserved).
 - See `docs/kiosk-deployment.md` for the full procedure, touch config, and escape flows.
 
 ## Docs
