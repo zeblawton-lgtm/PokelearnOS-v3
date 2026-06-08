@@ -59,7 +59,8 @@ if (isKiosk) {
     app.use(express.static(webDir));
     // SPA catch-all: any path that doesn't match an API route or static file
     // returns index.html so React Router can handle client-side navigation.
-    app.get("*", (_req, res) => {
+    // Express 5 (path-to-regexp v8) syntax — "*" alone is no longer valid.
+    app.get("/{*splat}", (_req, res) => {
       res.sendFile(path.join(webDir, "index.html"));
     });
     logger.info({ webDir }, "Serving static frontend from disk");
