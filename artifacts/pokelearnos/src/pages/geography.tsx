@@ -1,7 +1,7 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
@@ -39,6 +39,9 @@ export default function GeographyPage() {
   const [showHint, setShowHint] = useState(false);
 
   const q = questions[idx];
+  // Shuffle answer positions per question — the authored choices arrays put
+  // the correct answer in a predictable slot.
+  const choices = useMemo(() => shuffle(q.choices), [q]);
 
   const handleAnswer = useCallback(async (choice: string) => {
     if (selected !== null) return;
@@ -117,7 +120,7 @@ export default function GeographyPage() {
           </div>
 
           <div className="flex flex-col gap-4 w-full">
-            {q.choices.map((choice) => {
+            {choices.map((choice) => {
               let bg = "bg-white border-4 border-gray-200 text-gray-800";
               if (selected !== null) {
                 if (choice === q.answer) bg = "bg-green-400 border-green-500 text-white";
