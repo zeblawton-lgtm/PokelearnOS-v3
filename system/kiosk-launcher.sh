@@ -141,8 +141,12 @@ CHROMIUM_FLAGS=(
   # Audio — allow autoplay so TTS and feedback audio work without gesture
   --autoplay-policy=no-user-gesture-required
 
-  # Isolated Chromium profile for the kiosk session
-  --user-data-dir=/home/kids/.chromium-pokelearnos
+  # Isolated Chromium profile for the kiosk session.
+  # NOTE: must NOT be a hidden dot-directory — snap confinement blocks those,
+  # Chromium then silently falls back to its default profile (which on this
+  # machine still carried the v2 service-worker cache). snap/chromium/common
+  # is always writable by the chromium snap.
+  --user-data-dir=/home/kids/snap/chromium/common/pokelearnos-kiosk
 
   # Disable UI chrome that has no place in a kiosk
   --disable-features=TranslateUI
@@ -186,4 +190,5 @@ log "Launching: ${CHROMIUM_BIN} (kiosk mode)"
 # ---------------------------------------------------------------------------
 # 5. exec Chromium — replaces this process; PID tracked by systemd
 # ---------------------------------------------------------------------------
+mkdir -p /home/kids/snap/chromium/common/pokelearnos-kiosk
 exec "${CHROMIUM_BIN}" "${CHROMIUM_FLAGS[@]}"
