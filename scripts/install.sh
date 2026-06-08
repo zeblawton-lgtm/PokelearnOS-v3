@@ -364,6 +364,10 @@ else
   warn "${SERVICE_SRC} not found — service NOT installed."
 fi
 
+# Desktop relaunch icon — lets anyone restart the kiosk app with a tap
+bash "${REPO_DIR}/system/install-relaunch-icon.sh" || \
+  warn "Relaunch icon install failed — run manually: sudo bash system/install-relaunch-icon.sh"
+
 # ---------------------------------------------------------------------------
 # Step 9 — GDM3 autologin
 # ---------------------------------------------------------------------------
