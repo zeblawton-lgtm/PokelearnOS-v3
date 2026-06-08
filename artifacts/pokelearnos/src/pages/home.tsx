@@ -10,10 +10,8 @@ const modules = [
 ];
 
 export default function Home() {
-  const { profile, secondsRemaining, endSession } = useSession();
+  const { profile, endSession } = useSession();
   const [, navigate] = useLocation();
-  const minutes = Math.floor(secondsRemaining / 60);
-  const seconds = secondsRemaining % 60;
 
   // Ending the session drops profile to null, so the app returns to the
   // profile picker — that's where Leo/Michael switch who's playing.
@@ -33,7 +31,7 @@ export default function Home() {
         <p className="text-xl text-gray-600 mt-1 font-bold">What do you want to learn today?</p>
         <div className="inline-flex items-center gap-2 bg-pokemon-yellow/20 rounded-2xl px-5 py-2 mt-3">
           <span className="text-2xl font-black text-pokemon-darkred">
-            {minutes}:{seconds.toString().padStart(2, "0")} left today
+            No time limit
           </span>
         </div>
       </motion.div>

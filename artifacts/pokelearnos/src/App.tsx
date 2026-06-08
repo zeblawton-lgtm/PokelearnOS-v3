@@ -9,7 +9,6 @@ import Home from "@/pages/home";
 import MathPage from "@/pages/math";
 import SpanishPage from "@/pages/spanish";
 import GeographyPage from "@/pages/geography";
-import RestScreen from "@/pages/rest";
 import Progress from "@/pages/progress";
 import PokedexPage from "@/pages/pokedex";
 import RegionsPage from "@/pages/regions";
@@ -23,17 +22,15 @@ const queryClient = new QueryClient({
 });
 
 function AppRoutes() {
-  const { profile, isResting } = useSession();
+  const { profile } = useSession();
   const [location] = useLocation();
 
   useEffect(() => {
     if (!profile) { music.stop(); return; }
-    if (isResting) { music.playScene("rest"); return; }
     if (["/math", "/spanish", "/geography"].includes(location)) music.playScene("learn");
     else music.playScene("menu");
-  }, [profile, isResting, location]);
+  }, [profile, location]);
 
-  if (isResting) return <RestScreen />;
   if (!profile) return <ProfileSelect />;
 
   return (

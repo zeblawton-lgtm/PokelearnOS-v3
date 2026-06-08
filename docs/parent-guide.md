@@ -10,10 +10,10 @@
 When PokéLearnOS starts you'll see the profile selection screen.
 Tap the card for the child who is learning today:
 
-| Profile | Age | Avatar | Daily Limit |
-|---------|-----|--------|-------------|
-| **Michael** | 5 | Pikachu | 20 min/day |
-| **Leo** | 3 | Jigglypuff | 15 min/day |
+| Profile | Age | Avatar | Timer |
+|---------|-----|--------|-------|
+| **Michael** | 5 | Pikachu | No limit |
+| **Leo** | 3 | Jigglypuff | No limit |
 
 ---
 
@@ -34,8 +34,9 @@ Leo gets the concrete visual version; Michael gets the more detailed version.
 
 ## Session Timer
 
-A timer bar at the top of the screen shows remaining time. When it expires,
-the **Rest Screen** appears and the child cannot continue until you unlock.
+The time restriction is disabled. The top bar now shows **No limit**, and the
+app does not block learning time or move children to the Rest Screen because
+of elapsed minutes.
 
 ---
 
@@ -46,9 +47,7 @@ the **Rest Screen** appears and the child cannot continue until you unlock.
 A PIN entry overlay appears. Enter your PIN (default: **1234**).
 
 From the parent panel:
-- Add or remove today's time (+/– 5 minutes)
-- Reset today's timer without changing the normal daily limit
-- Adjust the child's daily time limit
+- Toggle audio
 - Change the parent PIN
 - End the session and return to profile select
 
@@ -66,37 +65,19 @@ From the parent panel:
 
 ---
 
-## Adjusting Daily Limits
+## Timer Restrictions
 
-Tap the corner lock icon → enter PIN → Session Settings.
+Daily time limits are currently disabled in the kiosk app.
 
-The daily limit is the normal per-day cap. The parent panel's **Today's Timer**
-controls are separate: they add/remove time just for the current day, or reset
-today's used time back to zero.
+The backend still records session usage for progress/history and keeps legacy
+timer endpoints for compatibility, but those endpoints no longer stop a child
+from starting or continuing a session. The parent panel no longer exposes
+add/remove/reset timer controls.
 
-Via the API (advanced — while backend is running):
+Via the API (advanced — while backend is running), timer reads should report an
+unlimited state:
 ```bash
-curl -s -X POST http://localhost:8765/api/admin/verify-pin \
-  -H "Content-Type: application/json" \
-  -d '{"pin":"1234"}'
-
-TOKEN="paste-token-from-response"
-
-# Normal daily cap, allowed range: 10-30 minutes
-curl -X PATCH http://localhost:8765/api/profiles/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -d '{"dailyLimitMinutes": 25}'
-
-# Add 5 minutes for today only
-curl -X POST http://localhost:8765/api/timer/1/adjust \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${TOKEN}" \
-  -d '{"minutes": 5}'
-
-# Reset today's timer
-curl -X POST http://localhost:8765/api/timer/1/reset \
-  -H "Authorization: Bearer ${TOKEN}"
+curl -s http://localhost:8765/api/timer/1
 ```
 
 ---
@@ -124,7 +105,7 @@ BASE_PATH=/ pnpm --filter @workspace/pokelearnos run build
 pnpm --filter @workspace/api-server run build
 
 # Update the installed checkout on the device
-ssh zulu@10.0.100.56 \
+ssh parent@10.0.100.56 \
   "cd /opt/pokelearnos && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh"
 ```
 
@@ -134,10 +115,10 @@ ssh zulu@10.0.100.56 \
 
 Default profiles are seeded automatically by the backend when the database is empty.
 
-| Name | Age | Pokémon | Daily Limit |
-|------|-----|---------|-------------|
-| Michael | 5 | Pikachu (#25) | 20 min |
-| Leo | 3 | Jigglypuff (#39) | 15 min |
+| Name | Age | Pokémon | Timer |
+|------|-----|---------|-------|
+| Michael | 5 | Pikachu (#25) | No limit |
+| Leo | 3 | Jigglypuff (#39) | No limit |
 
 ---
 

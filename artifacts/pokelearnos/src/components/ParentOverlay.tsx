@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, LogOut, KeyRound } from "lucide-react";
+import { X, LogOut, KeyRound } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { api, clearAdminAuth } from "@/lib/api";
 import { useLocation } from "wouter";
@@ -13,11 +13,7 @@ export function ParentOverlay() {
   const {
     isParentOverlayOpen,
     closeParentOverlay,
-    extendSession,
-    resetTodayTimer,
     endSession,
-    profile,
-    updateDailyLimit,
   } = useSession();
   const [mode, setMode] = useState<Mode>("pin");
   const [pin, setPin] = useState("");
@@ -60,46 +56,6 @@ export function ParentOverlay() {
     handleClose();
     await endSession();
     navigate("/");
-  };
-
-  const handleLimitChange = async (nextLimit: number) => {
-    setLoading(true);
-    setSettingsError("");
-    setSettingsMessage("");
-    try {
-      await updateDailyLimit(Math.max(10, Math.min(30, nextLimit)));
-    } catch {
-      setSettingsError("Could not update the daily limit.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExtendTime = async (extraMinutes: number) => {
-    setLoading(true);
-    setSettingsError("");
-    setSettingsMessage("");
-    try {
-      await extendSession(extraMinutes);
-    } catch {
-      setSettingsError("Could not update today's time.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetToday = async () => {
-    setLoading(true);
-    setSettingsError("");
-    setSettingsMessage("");
-    try {
-      await resetTodayTimer();
-      setSettingsMessage("Timer reset for today.");
-    } catch {
-      setSettingsError("Could not reset today's timer.");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleChangePin = async () => {
@@ -198,53 +154,6 @@ export function ParentOverlay() {
                     </button>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-base font-bold text-gray-500 mb-2">Today's Timer</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => void handleExtendTime(-5)}
-                      disabled={loading || !profile}
-                      className="w-20 h-20 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
-                      <Minus size={34} />
-                    </button>
-                    <p className="flex-1 text-center text-xl font-black text-gray-700">+/- 5 min</p>
-                    <button
-                      onClick={() => void handleExtendTime(5)}
-                      disabled={loading || !profile}
-                      className="w-20 h-20 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
-                      <Plus size={34} />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => void handleResetToday()}
-                    disabled={loading || !profile}
-                    className="mt-3 w-full bg-pokemon-yellow text-pokemon-darkred rounded-2xl py-3 text-base font-black min-h-[52px] disabled:opacity-50"
-                  >
-                    Reset Today
-                  </button>
-                </div>
-
-                {profile && (
-                  <div className="bg-gray-50 rounded-2xl p-4">
-                    <p className="text-base font-bold text-gray-500 mb-2">Daily Limit for {profile.name}</p>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleLimitChange(profile.dailyLimitMinutes - 5)}
-                        disabled={loading || profile.dailyLimitMinutes <= 10}
-                        className="w-20 h-20 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
-                        <Minus size={34} />
-                      </button>
-                      <p className="flex-1 text-center text-xl font-black text-gray-700">{profile.dailyLimitMinutes} min</p>
-                      <button
-                        onClick={() => handleLimitChange(profile.dailyLimitMinutes + 5)}
-                        disabled={loading || profile.dailyLimitMinutes >= 30}
-                        className="w-20 h-20 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
-                        <Plus size={34} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="bg-gray-50 rounded-2xl p-4">
                   <p className="text-base font-bold text-gray-500 mb-3">Change PIN</p>
                   <div className="flex gap-3 mb-3">

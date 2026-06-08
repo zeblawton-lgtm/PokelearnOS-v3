@@ -4,16 +4,10 @@ import { useSession } from "@/context/SessionContext";
 import { Lock } from "lucide-react";
 
 export function TimerBar() {
-  const { profile, secondsRemaining, openParentOverlay } = useSession();
+  const { profile, openParentOverlay } = useSession();
   const [, navigate] = useLocation();
 
   if (!profile) return null;
-
-  const totalSeconds = profile.dailyLimitMinutes * 60;
-  const pct = Math.max(0, Math.min(100, (secondsRemaining / totalSeconds) * 100));
-  const minutes = Math.floor(secondsRemaining / 60);
-  const seconds = secondsRemaining % 60;
-  const isLow = secondsRemaining < 180;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm px-4 pt-2 pb-2">
@@ -29,15 +23,15 @@ export function TimerBar() {
         <div className="flex-1">
           <div className="w-full bg-gray-100 rounded-full h-3">
             <motion.div
-              className={`h-3 rounded-full transition-colors ${isLow ? "bg-red-500" : "bg-pokemon-red"}`}
-              animate={{ width: `${pct}%` }}
+              className="h-3 rounded-full bg-pokemon-red transition-colors"
+              animate={{ width: "100%" }}
               transition={{ duration: 0.5 }}
             />
           </div>
         </div>
 
-        <span className={`text-lg font-black flex-shrink-0 ${isLow ? "text-red-500 animate-pulse" : "text-gray-700"}`}>
-          {minutes}:{seconds.toString().padStart(2, "0")}
+        <span className="text-lg font-black flex-shrink-0 text-gray-700">
+          No limit
         </span>
 
         <button

@@ -50,9 +50,10 @@ export interface SessionInfo {
   dailyLimitMinutes: number;
   timeAdjustmentSeconds: number;
   timeAdjustmentMinutes: number;
-  minutesRemaining: number;
-  secondsRemaining: number;
+  minutesRemaining: number | null;
+  secondsRemaining: number | null;
   isExpired: boolean;
+  isUnlimited: boolean;
   openSessionCount: number;
 }
 
@@ -63,10 +64,11 @@ export interface TimerState {
   timeAdjustmentSeconds: number;
   timeAdjustmentMinutes: number;
   minutesUsedToday: number;
-  minutesRemaining: number;
-  secondsRemaining: number;
+  minutesRemaining: number | null;
+  secondsRemaining: number | null;
   openSessionCount: number;
   isExpired: boolean;
+  isUnlimited: boolean;
 }
 
 export const api = {

@@ -16,7 +16,7 @@
 | Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded automatically on fresh database startup |
 | Profiles API | PASS | `GET /api/profiles` returns both profiles |
 | Session start API | PASS | `POST /api/sessions/start` returns session object |
-| Timer API | PASS | `GET /api/timer/1` returns `{minutesRemaining: 20, isExpired: false}` |
+| Timer API | PASS | `GET /api/timer/1` returns `{isUnlimited: true, isExpired: false}` |
 | Attempts API | PASS | `POST /api/attempts` logs correctly |
 | Stats API | PASS | `GET /api/stats/1` returns module breakdown |
 | Admin verify-pin | PASS | `POST /api/admin/verify-pin {pin:"1234"}` returns `{valid:true}` |
@@ -24,8 +24,8 @@
 | Math module (age 5) | PASS | Add, subtract, multiply, word problems |
 | Spanish module | PASS | Color, number, greeting, phrase questions |
 | World Explorer module | PASS | Continent, ocean, feature, concept questions |
-| Timer countdown | PASS | Timer bar counts down, `secondsRemaining` decrements |
-| Rest screen | PASS | Appears when `isResting=true` (timer expires) |
+| Timer countdown | REMOVED | Time restriction disabled; timer bar shows `No limit` |
+| Rest screen | REMOVED | No longer triggered by elapsed minutes |
 | Parent overlay | PASS | PIN entry modal, settings panel |
 | LLM disabled mode | PASS | No LLM calls made; all content is static |
 | Kiosk scripts exist | PASS | `system/` and `iso/` directories complete |
@@ -40,7 +40,7 @@ GET  /api/healthz              → 200 {"status":"ok"}
 GET  /api/profiles             → 200 [{Michael},{Leo}]
 POST /api/sessions/start       → 201 {session}
 POST /api/sessions/:id/end     → 200 {updated session}
-GET  /api/timer/1              → 200 {minutesRemaining: 20}
+GET  /api/timer/1              → 200 {isUnlimited: true, isExpired: false}
 POST /api/attempts             → 201 {attempt}
 GET  /api/stats/1              → 200 {totalCorrect, totalAttempts, moduleBreakdown}
 POST /api/admin/verify-pin     → 200 {valid: true}  (PIN: 1234)

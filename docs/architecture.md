@@ -10,7 +10,6 @@
 │  │                                                   │  │
 │  │  ProfileSelect → Home Hub → [Math|Spanish|Geo]   │  │
 │  │  TimerBar (top) ─── ParentOverlay (modal)        │  │
-│  │  RestScreen (timer expired)                       │  │
 │  └───────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
                            │ HTTP /api/*
@@ -19,8 +18,8 @@
 │                                                           │
 │  /api/profiles      GET profiles; admin POST/PATCH       │
 │  /api/sessions      POST start/end sessions              │
-│  /api/timer/:id     GET daily time remaining             │
-│  /api/timer/:id/*   admin add/reset today's time         │
+│  /api/timer/:id     GET unlimited timer state            │
+│  /api/timer/:id/*   legacy admin timer compatibility     │
 │  /api/attempts      POST log question attempts           │
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
@@ -37,7 +36,7 @@
 │  attempts    id, sessionId, profileId, module,          │
 │              questionId, correct, answeredAt             │
 │  settings    id, key, value, updatedAt                   │
-│              (parent_pin_hash and timer adjustments)     │
+│              (parent_pin_hash and legacy timer settings) │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -46,7 +45,7 @@
 ```
 App
 ├── SessionProvider (context: profile, session, timer, overlay state)
-│   ├── TimerBar (fixed top bar, countdown, parent lock button)
+│   ├── TimerBar (fixed top bar, no-limit status, parent lock button)
 │   ├── Routes
 │   │   ├── /          → ProfileSelect (loads profiles from API)
 │   │   ├── /home      → Home Hub (3 module tiles + progress)
@@ -54,7 +53,6 @@ App
 │   │   ├── /spanish   → SpanishPage (vocabulary questions)
 │   │   ├── /geography → GeographyPage (world knowledge)
 │   │   ├── /progress  → Progress (stats from API)
-│   │   └── <rest>     → RestScreen (when isResting=true)
 │   └── ParentOverlay (PIN modal + settings sheet)
 ```
 
@@ -64,23 +62,21 @@ App
 1. User taps profile card
    → GET /api/timer/:profileId
    → POST /api/sessions/start {profileId}
-   → SessionContext starts countdown from server secondsRemaining
+   → SessionContext starts an unrestricted learning session
 
 2. While learning
    → User answers questions
    → POST /api/attempts {sessionId, profileId, module, questionId, correct}
-   → Timer counts down locally and refreshes server state every 15 seconds
+   → Timer state refreshes every 15 seconds for compatibility, but does not
+     count down or enforce a limit
 
-3. Timer reaches 0
-   → Backend closes any open session and returns isExpired=true
-   → isResting = true
-   → RestScreen displayed (fullscreen overlay)
-   → Only parent PIN can add/reset today's time or end the day
+3. Time usage exceeds the old configured limit
+   → Backend still records minutes used today
+   → Public timer responses return isUnlimited=true and isExpired=false
+   → Child can keep learning
 
 4. Parent unlocks
    → POST /api/admin/verify-pin {pin}
-   → If valid: authenticated POST /api/timer/:id/adjust adds today-only time
-   → Parent settings can also PATCH /api/profiles/:id for the normal daily cap
    → If end: POST /api/sessions/:id/end, navigate to ProfileSelect
 ```
 

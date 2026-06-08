@@ -15,13 +15,12 @@ const BASE: string =
   "/";
 const root = BASE.endsWith("/") ? BASE : BASE + "/";
 
-export type Scene = "menu" | "learn" | "rest";
+export type Scene = "menu" | "learn";
 
 // Curated mapping of scene -> looping playlist (filenames in public/audio).
 const SCENES: Record<Scene, string[]> = {
   menu: ["main-menu", "mii-channel", "mii-plaza", "wii-play-title"],
   learn: ["mii-parade", "training-menu", "mii-channel"],
-  rest: ["yoga"],
 };
 
 const MUTE_KEY = "pokelearn_music_muted";

@@ -8,8 +8,13 @@ import {
   persistedMinutesForSession,
   startOfLocalDay,
   type SessionUsage,
+  type TimerUsageState,
 } from "../lib/timer";
 import { requireAdminAuth } from "../lib/admin-auth";
+
+type TimerProfile = {
+  dailyLimitMinutes: number;
+};
 
 const router = Router();
 
@@ -22,7 +27,6 @@ router.post("/sessions/start", async (req, res) => {
   await closeOpenSessions(id);
   const timer = await getTimerState(id);
   if (!timer) { res.status(404).json({ error: "Profile not found" }); return; }
-  if (timer.isExpired) { res.status(403).json({ error: "Daily limit reached", timer }); return; }
 
   const [session] = await db.insert(sessionsTable)
     .values({ profileId: id })
@@ -51,13 +55,6 @@ router.get("/timer/:profileId", async (req, res) => {
   const timer = await getTimerState(profileId);
   if (!timer) { res.status(404).json({ error: "Profile not found" }); return; }
 
-  if (timer.isExpired && timer.openSessionCount > 0) {
-    await closeOpenSessions(profileId);
-    const persisted = await getTimerState(profileId);
-    res.json(persisted);
-    return;
-  }
-
   res.json(timer);
 });
 
@@ -78,12 +75,6 @@ router.post("/timer/:profileId/adjust", requireAdminAuth, async (req, res) => {
 
   const timer = await getTimerState(profileId);
   if (!timer) { res.status(404).json({ error: "Profile not found" }); return; }
-
-  if (timer.isExpired && timer.openSessionCount > 0) {
-    await closeOpenSessions(profileId);
-    res.json(await getTimerState(profileId));
-    return;
-  }
 
   res.json(timer);
 });
@@ -131,6 +122,14 @@ async function getTimerState(profileId: number, now = new Date()) {
     await getTimerAdjustmentSeconds(profileId, now),
   );
 
+  return toPublicTimerState(profileId, profile, usage);
+}
+
+export function toPublicTimerState(
+  profileId: number,
+  profile: TimerProfile,
+  usage: TimerUsageState,
+) {
   return {
     sessionId: usage.activeSessionId,
     profileId,
@@ -138,10 +137,11 @@ async function getTimerState(profileId: number, now = new Date()) {
     timeAdjustmentSeconds: usage.timeAdjustmentSeconds,
     timeAdjustmentMinutes: Math.ceil(usage.timeAdjustmentSeconds / 60),
     minutesUsedToday: usage.minutesUsedToday,
-    minutesRemaining: usage.minutesRemaining,
-    secondsRemaining: usage.secondsRemaining,
+    minutesRemaining: null,
+    secondsRemaining: null,
     openSessionCount: usage.openSessionCount,
-    isExpired: usage.isExpired,
+    isExpired: false,
+    isUnlimited: true,
   };
 }
 
