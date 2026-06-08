@@ -2,6 +2,9 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import nodePath from "node:path";
 import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
+// Pure JS — receives the better-sqlite3 instance as an argument, so it is
+// safe to import statically and gets bundled (unlike the native driver below).
+import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
 import pg from "pg";
 import * as schema from "./schema";
 import { useSqlite, sqlitePath } from "./driver";
@@ -23,7 +26,6 @@ if (useSqlite()) {
   // better-sqlite3 is a native module; it is externalized from the api-server
   // bundle and resolved from node_modules at runtime.
   const Database = require("better-sqlite3");
-  const { drizzle: drizzleSqlite } = require("drizzle-orm/better-sqlite3");
 
   const file = sqlitePath();
   const dir = nodePath.dirname(nodePath.resolve(file));
