@@ -253,7 +253,7 @@ if confirm "Deploy to ${INSTALL_DIR}/?" "y"; then
   # Minimal runtime package.json — the backend bundle externalizes only
   # native modules (better-sqlite3). npm cannot parse pnpm's workspace:/catalog:
   # protocols, so we must NOT copy the api-server package.json here.
-  BS3_VERSION="$(node -p "require('${REPO_DIR}/node_modules/better-sqlite3/package.json').version")"
+  BS3_VERSION="$(node -p "require('${REPO_DIR}/artifacts/api-server/node_modules/better-sqlite3/package.json').version")"
   cat > "${INSTALL_DIR}/package.json" << PKGEOF
 {
   "name": "pokelearnos-runtime",
