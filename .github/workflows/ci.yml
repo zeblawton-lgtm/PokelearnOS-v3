@@ -35,6 +35,9 @@ jobs:
       - name: Typecheck workspace
         run: pnpm run typecheck
 
+      - name: Run API tests
+        run: pnpm --filter @workspace/api-server test
+
       - name: Build frontend
         run: pnpm --filter @workspace/pokelearnos build
 

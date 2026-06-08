@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, LogOut } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
-import { api } from "@/lib/api";
+import { api, clearAdminAuth } from "@/lib/api";
 import { useLocation } from "wouter";
 import { isMuted, setMuted } from "@/lib/sound";
 import { isMusicMuted, setMusicMuted } from "@/lib/music";
@@ -20,6 +20,7 @@ export function ParentOverlay() {
   const [, navigate] = useLocation();
 
   const handleClose = () => {
+    clearAdminAuth();
     closeParentOverlay();
     setMode("pin");
     setPin("");

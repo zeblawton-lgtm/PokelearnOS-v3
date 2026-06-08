@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@/context/SessionContext";
 import { useLocation } from "wouter";
-import { api, type Profile } from "@/lib/api";
+import { api, clearAdminAuth, type Profile } from "@/lib/api";
 
 const SPRITE = ARTWORK;
 
@@ -45,6 +45,7 @@ export default function RestScreen() {
         setPinError(false);
         setShowPin(false);
         setPin("");
+        clearAdminAuth();
         extendSession(15);
         navigate("/home");
       } else {
