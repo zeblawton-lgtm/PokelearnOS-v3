@@ -8,7 +8,7 @@ import { api, clearAdminAuth, type Profile } from "@/lib/api";
 const SPRITE = ARTWORK;
 
 export default function RestScreen() {
-  const { profile, extendSession, endSession, startSession } = useSession();
+  const { profile, resetTodayTimer, endSession, startSession } = useSession();
   const [, navigate] = useLocation();
   const [showPin, setShowPin] = useState(false);
   const [pin, setPin] = useState("");
@@ -45,7 +45,7 @@ export default function RestScreen() {
         setPinError(false);
         setShowPin(false);
         setPin("");
-        await extendSession(15);
+        await resetTodayTimer();
         clearAdminAuth();
         navigate("/home");
       } else {
@@ -108,7 +108,7 @@ export default function RestScreen() {
               onClick={() => setShowPin(true)}
               className="bg-white/20 text-white text-xl font-black py-5 rounded-3xl border-2 border-white/30 min-h-[72px]"
             >
-              Parent Unlock
+              Parent Reset
             </button>
             <button
               onClick={handleEndDay}
@@ -123,7 +123,7 @@ export default function RestScreen() {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-3xl p-6 w-full max-w-sm"
           >
-            <p className="text-xl font-black text-gray-800 mb-4">Enter Parent PIN</p>
+            <p className="text-xl font-black text-gray-800 mb-4">Enter Parent PIN to Reset Today</p>
             <div className="flex gap-3 justify-center mb-4">
               {[0, 1, 2, 3].map(i => (
                 <div key={i} className={`w-14 h-14 rounded-2xl border-4 flex items-center justify-center text-3xl font-black
@@ -158,7 +158,7 @@ export default function RestScreen() {
                 disabled={pin.length !== 4 || loading}
                 className="flex-1 py-4 rounded-2xl bg-pokemon-blue text-white text-lg font-black disabled:opacity-50 min-h-[60px]"
               >
-                Unlock
+                Reset
               </button>
             </div>
           </motion.div>
