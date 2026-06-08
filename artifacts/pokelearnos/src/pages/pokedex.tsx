@@ -37,24 +37,24 @@ export default function PokedexPage() {
   return (
     <div className="flex flex-col h-full px-4 py-4">
       <div className="flex items-center gap-4 mb-3">
-        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center flex-shrink-0" aria-label="Back">
-          <ArrowLeft size={28} />
+        <button onClick={() => navigate("/home")} className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center flex-shrink-0" aria-label="Back">
+          <ArrowLeft size={40} />
         </button>
         <h1 className="text-3xl font-black text-pokemon-red">Pokédex</h1>
         <span className="ml-auto text-base font-bold text-gray-400">{results.length} of {pokedex.length}</span>
       </div>
 
       <div className="relative mb-4">
-        <Search size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={31} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name, number, or type…"
-          className="w-full bg-white border-4 border-gray-200 rounded-3xl py-4 pl-12 pr-12 text-xl font-bold text-gray-800 focus:border-pokemon-blue outline-none"
+          className="w-full bg-white border-4 border-gray-200 rounded-3xl py-4 pl-14 pr-14 text-xl font-bold text-gray-800 focus:border-pokemon-blue outline-none"
         />
         {query && (
-          <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center" aria-label="Clear">
-            <X size={18} />
+          <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center" aria-label="Clear">
+            <X size={25} />
           </button>
         )}
       </div>
@@ -96,8 +96,8 @@ export default function PokedexPage() {
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
               className="bg-white rounded-4xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-6 text-center relative"
             >
-              <button onClick={() => setActive(null)} className="absolute top-4 right-4 w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Close">
-                <X size={20} />
+              <button onClick={() => setActive(null)} className="absolute top-4 right-4 w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Close">
+                <X size={28} />
               </button>
               <img src={ARTWORK(active.id)} onError={onSpriteError} alt={active.name} className="w-56 h-56 object-contain mx-auto drop-shadow-xl mb-2" />
               <h2 className="text-4xl font-black text-gray-800">{active.name}</h2>

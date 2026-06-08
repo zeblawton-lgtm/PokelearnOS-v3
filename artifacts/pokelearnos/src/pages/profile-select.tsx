@@ -65,19 +65,19 @@ export default function ProfileSelect() {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-12"
+        className="text-center mb-8"
       >
         <img
           src={SPRITE(25)}
           onError={onSpriteError}
           alt="Pikachu"
-          className="w-32 h-32 mx-auto mb-4 drop-shadow-xl"
+          className="w-48 h-48 sm:w-64 sm:h-64 mx-auto mb-4 drop-shadow-xl"
         />
         <h1 className="text-5xl font-black text-pokemon-red">PokelearnOS</h1>
         <p className="text-2xl text-gray-600 mt-2 font-bold">Who is learning today?</p>
       </motion.div>
 
-      <div className="flex flex-col sm:flex-row gap-8 w-full max-w-2xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl">
         {profiles.map((profile, i) => (
           <motion.button
             key={profile.id}
@@ -88,14 +88,14 @@ export default function ProfileSelect() {
             whileTap={{ scale: 0.95 }}
             onClick={() => handleSelect(profile)}
             disabled={isLoading}
-            className="flex-1 bg-white rounded-4xl shadow-xl border-4 border-gray-100 p-8 flex flex-col items-center gap-4 hover:border-pokemon-yellow hover:shadow-2xl transition-all"
+            className="w-full bg-white rounded-4xl shadow-xl border-4 border-gray-100 p-6 sm:p-8 flex flex-col items-center gap-4 hover:border-pokemon-yellow hover:shadow-2xl transition-all"
           >
-            <div className="w-64 h-64 rounded-full bg-pokemon-yellow/20 flex items-center justify-center overflow-hidden">
+            <div className="w-full max-w-[32rem] aspect-square rounded-full bg-pokemon-yellow/20 flex items-center justify-center overflow-hidden">
               <img
                 src={SPRITE(profile.avatarPokemonId)}
                 onError={onSpriteError}
                 alt={profile.name}
-                className="w-56 h-56 object-contain drop-shadow-md"
+                className="w-[88%] h-[88%] object-contain drop-shadow-md"
               />
             </div>
             <div>

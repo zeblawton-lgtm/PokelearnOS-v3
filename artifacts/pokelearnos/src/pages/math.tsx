@@ -294,7 +294,7 @@ export default function MathPage() {
             {questions.map((_, i) => (
               <Star
                 key={i}
-                size={32}
+                size={45}
                 className={i < score ? "text-pokemon-yellow fill-pokemon-yellow" : "text-gray-300"}
               />
             ))}
@@ -316,9 +316,9 @@ export default function MathPage() {
       <div className="flex items-center gap-4 mb-4">
         <button
           onClick={() => navigate("/home")}
-          className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center"
+          className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center"
         >
-          <ArrowLeft size={28} />
+          <ArrowLeft size={40} />
         </button>
         <div className="flex-1">
           <p className="text-lg font-bold text-gray-500">

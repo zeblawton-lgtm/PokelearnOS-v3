@@ -42,10 +42,10 @@ export function TimerBar() {
 
         <button
           onClick={openParentOverlay}
-          className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"
+          className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"
           aria-label="Parent controls"
         >
-          <Lock size={18} className="text-gray-500" />
+          <Lock size={25} className="text-gray-500" />
         </button>
       </div>
     </div>

@@ -41,8 +41,8 @@ export default function Progress() {
   return (
     <div className="flex flex-col h-full px-4 py-4">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
-          <ArrowLeft size={28} />
+        <button onClick={() => navigate("/home")} className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <ArrowLeft size={40} />
         </button>
         <h1 className="text-3xl font-black text-pokemon-red">My Progress</h1>
       </div>
@@ -50,15 +50,15 @@ export default function Progress() {
       {profile && (
         <motion.div
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-md p-6 mb-5 flex items-center gap-5"
+          className="bg-white rounded-3xl shadow-md p-6 mb-5 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left"
         >
-          <img src={SPRITE(profile.avatarPokemonId)} onError={onSpriteError} alt={profile.name} className="w-36 h-36 object-contain" />
+          <img src={SPRITE(profile.avatarPokemonId)} onError={onSpriteError} alt={profile.name} className="w-60 h-60 sm:w-72 sm:h-72 object-contain" />
           <div>
             <p className="text-3xl font-black text-gray-800">{profile.name}</p>
             <p className="text-xl text-gray-500 font-bold">Age {profile.age} Trainer</p>
           </div>
-          <div className="ml-auto text-right">
-            <Trophy size={36} className="text-pokemon-yellow mx-auto mb-1" />
+          <div className="sm:ml-auto text-center sm:text-right">
+            <Trophy size={50} className="text-pokemon-yellow mx-auto mb-1" />
             <p className="text-2xl font-black text-pokemon-yellow">{accuracy}%</p>
             <p className="text-sm text-gray-500 font-bold">accuracy</p>
           </div>
@@ -74,13 +74,13 @@ export default function Progress() {
           <div className="grid grid-cols-2 gap-4 mb-5">
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
               className="bg-pokemon-red/10 rounded-3xl p-5 text-center">
-              <Target size={32} className="text-pokemon-red mx-auto mb-2" />
+              <Target size={45} className="text-pokemon-red mx-auto mb-2" />
               <p className="text-4xl font-black text-pokemon-red">{stats?.totalAttempts ?? 0}</p>
               <p className="text-lg font-bold text-gray-600">Questions</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
               className="bg-green-100 rounded-3xl p-5 text-center">
-              <Star size={32} className="text-green-600 mx-auto mb-2 fill-green-600" />
+              <Star size={45} className="text-green-600 mx-auto mb-2 fill-green-600" />
               <p className="text-4xl font-black text-green-600">{stats?.totalCorrect ?? 0}</p>
               <p className="text-lg font-bold text-gray-600">Correct</p>
             </motion.div>

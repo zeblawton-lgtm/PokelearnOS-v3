@@ -93,13 +93,13 @@ export default function RestScreen() {
             {other && (
               <button
                 onClick={handleSwitch}
-                className="bg-pokemon-yellow text-gray-900 text-2xl font-black py-4 rounded-3xl min-h-[96px] flex items-center justify-center gap-4 shadow-xl"
+                className="bg-pokemon-yellow text-gray-900 text-2xl font-black py-4 rounded-3xl min-h-[160px] flex items-center justify-center gap-5 shadow-xl"
               >
                 <img
                   src={SPRITE(other.avatarPokemonId)}
                   onError={onSpriteError}
                   alt={other.name}
-                  className="w-20 h-20 object-contain drop-shadow"
+                  className="w-40 h-40 object-contain drop-shadow"
                 />
                 {other.name}&rsquo;s Turn!
               </button>

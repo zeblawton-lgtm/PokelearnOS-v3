@@ -37,8 +37,8 @@ export default function RegionsPage() {
   return (
     <div className="flex flex-col h-full px-4 py-4">
       <div className="flex items-center gap-4 mb-4">
-        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Back">
-          <ArrowLeft size={28} />
+        <button onClick={() => navigate("/home")} className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Back">
+          <ArrowLeft size={40} />
         </button>
         <h1 className="text-3xl font-black text-green-600">Regions & Climates</h1>
       </div>
@@ -51,13 +51,13 @@ export default function RegionsPage() {
             transition={{ delay: i * 0.05 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => tap(h)}
-            className={`${h.color} rounded-3xl p-4 shadow-lg text-white min-h-[220px] text-left`}
+            className={`${h.color} rounded-3xl p-4 shadow-lg text-white min-h-[300px] text-left`}
           >
             <div className="relative mb-3">
-              <GeoScene kind={h.scene} label={h.examplePlace} className="min-h-[150px]" />
-              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="absolute -bottom-4 right-1 w-28 h-28 object-contain drop-shadow-xl" />
+              <GeoScene kind={h.scene} label={h.examplePlace} className="min-h-[220px]" />
+              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="absolute bottom-2 right-2 w-56 h-56 object-contain drop-shadow-xl" />
             </div>
-            <div className="pr-20">
+            <div>
               <p className="text-3xl font-black">{h.name}</p>
               <p className="text-base font-black text-white/95">{h.climate}</p>
               <p className="text-base font-bold text-white/90 leading-snug">{h.fact}</p>

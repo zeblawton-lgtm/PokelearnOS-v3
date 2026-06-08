@@ -130,14 +130,14 @@ export function ParentOverlay() {
           <motion.div
             initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-white rounded-4xl w-full max-w-sm p-6"
+            className="bg-white rounded-4xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-6"
           >
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-2xl font-black text-gray-800">
                 {mode === "pin" ? "Parent Area" : "Parent Settings"}
               </h2>
-              <button onClick={handleClose} className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center">
-                <X size={20} />
+              <button onClick={handleClose} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <X size={28} />
               </button>
             </div>
 
@@ -204,15 +204,15 @@ export function ParentOverlay() {
                     <button
                       onClick={() => void handleExtendTime(-5)}
                       disabled={loading || !profile}
-                      className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
-                      <Minus size={24} />
+                      className="w-20 h-20 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+                      <Minus size={34} />
                     </button>
                     <p className="flex-1 text-center text-xl font-black text-gray-700">+/- 5 min</p>
                     <button
                       onClick={() => void handleExtendTime(5)}
                       disabled={loading || !profile}
-                      className="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
-                      <Plus size={24} />
+                      className="w-20 h-20 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
+                      <Plus size={34} />
                     </button>
                   </div>
                   <button
@@ -231,15 +231,15 @@ export function ParentOverlay() {
                       <button
                         onClick={() => handleLimitChange(profile.dailyLimitMinutes - 5)}
                         disabled={loading || profile.dailyLimitMinutes <= 10}
-                        className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
-                        <Minus size={24} />
+                        className="w-20 h-20 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
+                        <Minus size={34} />
                       </button>
                       <p className="flex-1 text-center text-xl font-black text-gray-700">{profile.dailyLimitMinutes} min</p>
                       <button
                         onClick={() => handleLimitChange(profile.dailyLimitMinutes + 5)}
                         disabled={loading || profile.dailyLimitMinutes >= 30}
-                        className="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
-                        <Plus size={24} />
+                        className="w-20 h-20 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
+                        <Plus size={34} />
                       </button>
                     </div>
                   </div>
@@ -270,7 +270,7 @@ export function ParentOverlay() {
                     disabled={loading || currentPin.length !== 4 || newPin.length !== 4}
                     className="w-full flex items-center justify-center gap-2 bg-pokemon-blue text-white rounded-2xl py-3 text-base font-black min-h-[56px] disabled:opacity-50"
                   >
-                    <KeyRound size={20} />
+                    <KeyRound size={28} />
                     Change PIN
                   </button>
                 </div>
@@ -279,7 +279,7 @@ export function ParentOverlay() {
                   onClick={handleEndSession}
                   className="flex items-center justify-center gap-3 bg-red-50 text-red-600 rounded-2xl py-4 text-lg font-black min-h-[64px]"
                 >
-                  <LogOut size={22} />
+                  <LogOut size={31} />
                   End Session
                 </button>
               </div>
