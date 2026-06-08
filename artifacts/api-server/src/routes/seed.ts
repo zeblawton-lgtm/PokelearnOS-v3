@@ -13,7 +13,7 @@ router.post("/admin/seed", requireAdminAuth, async (_req, res) => {
   }
 
   const profiles = await db.insert(profilesTable).values([
-    { name: "Michael", age: 5, avatarPokemonId: 25, dailyLimitMinutes: 20 },
+    { name: "Michael", age: 5, avatarPokemonId: 448, dailyLimitMinutes: 20 },
     { name: "Leo", age: 3, avatarPokemonId: 778, dailyLimitMinutes: 15 },
   ]).returning();
 

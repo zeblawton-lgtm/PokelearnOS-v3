@@ -11,19 +11,26 @@ async function seedIfEmpty(): Promise<void> {
   const existing = await db.select().from(profilesTable);
   if (existing.length === 0) {
     await db.insert(profilesTable).values([
-      { name: "Michael", age: 5, avatarPokemonId: 25, dailyLimitMinutes: 20 },
+      { name: "Michael", age: 5, avatarPokemonId: 448, dailyLimitMinutes: 20 },
       { name: "Leo", age: 3, avatarPokemonId: 778, dailyLimitMinutes: 15 },
     ]);
     logger.info("Fresh database — seeded default profiles (Michael, Leo)");
     return;
   }
-  // Migration: Leo's avatar moved from Jigglypuff (39) to Mimikyu (778).
+  // Migrations for already-seeded kiosk databases (avatar changes).
   const leo = existing.find((p) => p.name === "Leo");
   if (leo && leo.avatarPokemonId === 39) {
     await db.update(profilesTable)
       .set({ avatarPokemonId: 778 })
       .where(eq(profilesTable.id, leo.id));
     logger.info("Migrated Leo's avatar 39 → 778 (Mimikyu)");
+  }
+  const michael = existing.find((p) => p.name === "Michael");
+  if (michael && michael.avatarPokemonId === 25) {
+    await db.update(profilesTable)
+      .set({ avatarPokemonId: 448 })
+      .where(eq(profilesTable.id, michael.id));
+    logger.info("Migrated Michael's avatar 25 → 448 (Lucario)");
   }
 }
 
