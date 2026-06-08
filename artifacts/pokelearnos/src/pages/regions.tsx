@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playTap, speak } from "@/lib/sound";
+import { GeoScene, type GeoSceneKind } from "@/components/GeoScene";
 
 // "Pokémon Homes" — teaches real-world habitat/biome concepts (forests, oceans,
 // mountains, caves, grasslands, icy places) using Pokémon as friendly examples.
@@ -10,26 +11,28 @@ import { playTap, speak } from "@/lib/sound";
 // do not present fictional regions as real).
 interface Habitat {
   name: string;
-  emoji: string;
   color: string;
+  scene: GeoSceneKind;
+  examplePlace: string;
+  climate: string;
   pokemonId: number;
   pokemonName: string;
   fact: string;
 }
 
 const HABITATS: Habitat[] = [
-  { name: "Forest", emoji: "🌳", color: "bg-green-500", pokemonId: 1, pokemonName: "Bulbasaur", fact: "Forests are full of tall trees and lots of plants." },
-  { name: "Ocean", emoji: "🌊", color: "bg-blue-500", pokemonId: 131, pokemonName: "Lapras", fact: "The ocean is a huge body of salty water." },
-  { name: "Mountain", emoji: "⛰️", color: "bg-orange-500", pokemonId: 6, pokemonName: "Charizard", fact: "Mountains are very tall and rocky, high in the sky." },
-  { name: "Cave", emoji: "🕳️", color: "bg-gray-600", pokemonId: 94, pokemonName: "Gengar", fact: "Caves are dark holes inside rocks and mountains." },
-  { name: "Grassland", emoji: "🌾", color: "bg-lime-500", pokemonId: 25, pokemonName: "Pikachu", fact: "Grasslands are wide, open fields of grass." },
-  { name: "Snowy Land", emoji: "❄️", color: "bg-cyan-500", pokemonId: 87, pokemonName: "Dewgong", fact: "Some places are cold and covered in ice and snow." },
+  { name: "Rainforest", color: "bg-green-600", scene: "rainforest", examplePlace: "Amazon Rainforest", climate: "Warm and wet", pokemonId: 1, pokemonName: "Bulbasaur", fact: "Rainforests are warm, wet forests with huge plants." },
+  { name: "Desert", color: "bg-amber-500", scene: "sahara", examplePlace: "Sahara Desert", climate: "Hot and dry", pokemonId: 27, pokemonName: "Sandshrew", fact: "Deserts are very dry places with little rain." },
+  { name: "Ocean Reef", color: "bg-blue-500", scene: "reef", examplePlace: "Great Barrier Reef", climate: "Warm water", pokemonId: 131, pokemonName: "Lapras", fact: "Reefs are ocean homes with coral and many sea animals." },
+  { name: "Mountain", color: "bg-orange-500", scene: "mountain", examplePlace: "Rocky Mountains", climate: "Cool and windy", pokemonId: 448, pokemonName: "Lucario", fact: "Mountains are tall rocky places high in the sky." },
+  { name: "Grassland", color: "bg-lime-500", scene: "grassland", examplePlace: "Open grassland", climate: "Sunny and open", pokemonId: 25, pokemonName: "Pikachu", fact: "Grasslands are wide open fields of grass." },
+  { name: "Snowy Land", color: "bg-cyan-500", scene: "antarctica", examplePlace: "Antarctica", climate: "Cold and icy", pokemonId: 87, pokemonName: "Dewgong", fact: "Some places are cold and covered in ice and snow." },
 ];
 
 export default function RegionsPage() {
   const [, navigate] = useLocation();
 
-  const tap = (h: Habitat) => { playTap(); speak(h.name, "en-US"); };
+  const tap = (h: Habitat) => { playTap(); speak(`${h.name}. ${h.climate}.`, "en-US"); };
 
   return (
     <div className="flex flex-col h-full px-4 py-4">
@@ -37,7 +40,7 @@ export default function RegionsPage() {
         <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Back">
           <ArrowLeft size={28} />
         </button>
-        <h1 className="text-3xl font-black text-green-600">Pokémon Homes</h1>
+        <h1 className="text-3xl font-black text-green-600">Regions & Climates</h1>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto pb-6">
@@ -48,14 +51,15 @@ export default function RegionsPage() {
             transition={{ delay: i * 0.05 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => tap(h)}
-            className={`${h.color} rounded-3xl p-4 flex items-center gap-4 shadow-lg text-white min-h-[120px] text-left`}
+            className={`${h.color} rounded-3xl p-4 shadow-lg text-white min-h-[220px] text-left`}
           >
-            <div className="w-24 h-24 bg-white/25 rounded-2xl flex items-center justify-center flex-shrink-0 relative">
-              <span className="text-5xl">{h.emoji}</span>
-              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="w-28 h-28 object-contain absolute -bottom-2 -right-2 drop-shadow" />
+            <div className="relative mb-3">
+              <GeoScene kind={h.scene} label={h.examplePlace} className="min-h-[150px]" />
+              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="absolute -bottom-4 right-1 w-28 h-28 object-contain drop-shadow-xl" />
             </div>
-            <div>
+            <div className="pr-20">
               <p className="text-3xl font-black">{h.name}</p>
+              <p className="text-base font-black text-white/95">{h.climate}</p>
               <p className="text-base font-bold text-white/90 leading-snug">{h.fact}</p>
             </div>
           </motion.button>

@@ -10,6 +10,7 @@ export type SessionUsage = {
 export type TimerUsageState = {
   activeSessionId: number | null;
   openSessionCount: number;
+  timeAdjustmentSeconds: number;
   secondsUsedToday: number;
   minutesUsedToday: number;
   secondsRemaining: number;
@@ -21,6 +22,13 @@ export function startOfLocalDay(now = new Date()): Date {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
   return start;
+}
+
+export function localDayKey(now = new Date()): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function sessionElapsedSeconds(
@@ -44,6 +52,7 @@ export function calculateTimerUsage(
   dailyLimitMinutes: number,
   sessions: SessionUsage[],
   now = new Date(),
+  timeAdjustmentSeconds = 0,
 ): TimerUsageState {
   const todayStartMs = startOfLocalDay(now).getTime();
   const dailyLimitSeconds = Math.max(0, dailyLimitMinutes * 60);
@@ -64,11 +73,13 @@ export function calculateTimerUsage(
     secondsUsedToday += sessionElapsedSeconds(session, now);
   }
 
-  const secondsRemaining = Math.max(0, dailyLimitSeconds - secondsUsedToday);
+  const adjustedLimitSeconds = Math.max(0, dailyLimitSeconds + timeAdjustmentSeconds);
+  const secondsRemaining = Math.max(0, adjustedLimitSeconds - secondsUsedToday);
 
   return {
     activeSessionId,
     openSessionCount,
+    timeAdjustmentSeconds,
     secondsUsedToday,
     minutesUsedToday: Math.ceil(secondsUsedToday / 60),
     secondsRemaining,

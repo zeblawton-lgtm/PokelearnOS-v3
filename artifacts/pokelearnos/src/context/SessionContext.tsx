@@ -15,6 +15,7 @@ interface SessionActions {
   startSession: (profile: Profile) => Promise<void>;
   endSession: () => Promise<void>;
   extendSession: (extraMinutes: number) => Promise<void>;
+  resetTodayTimer: () => Promise<void>;
   updateDailyLimit: (dailyLimitMinutes: number) => Promise<void>;
   openParentOverlay: () => void;
   closeParentOverlay: () => void;
@@ -154,12 +155,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const extendSession = useCallback(async (extraMinutes: number) => {
     const current = profileRef.current;
     if (!current) return;
-    const nextLimit = Math.max(10, Math.min(30, current.dailyLimitMinutes + extraMinutes));
-    const updated = await api.updateProfile(current.id, { dailyLimitMinutes: nextLimit });
-    setProfile(updated);
-    const timer = await api.getTimer(updated.id);
+    const timer = await api.adjustTimer(current.id, extraMinutes);
+    setProfile(prev => prev ? { ...prev, dailyLimitMinutes: timer.dailyLimitMinutes } : current);
     if (!timer.isExpired && !sessionRef.current) {
-      const sess = await api.startSession(updated.id);
+      const sess = await api.startSession(current.id);
+      setSession(sess);
+      setIsResting(false);
+      startTimer(sess.secondsRemaining);
+      return;
+    }
+    applyTimerState(timer);
+  }, [applyTimerState, startTimer]);
+
+  const resetTodayTimer = useCallback(async () => {
+    const current = profileRef.current;
+    if (!current) return;
+    const timer = await api.resetTimer(current.id);
+    setProfile(prev => prev ? { ...prev, dailyLimitMinutes: timer.dailyLimitMinutes } : current);
+    if (!timer.isExpired && !sessionRef.current) {
+      const sess = await api.startSession(current.id);
       setSession(sess);
       setIsResting(false);
       startTimer(sess.secondsRemaining);
@@ -176,7 +190,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionContext.Provider value={{
       profile, session, secondsRemaining, isResting, isParentOverlayOpen, isLoading,
-      startSession, endSession, extendSession, updateDailyLimit,
+      startSession, endSession, extendSession, resetTodayTimer, updateDailyLimit,
       openParentOverlay: () => setIsParentOverlayOpen(true),
       closeParentOverlay: () => setIsParentOverlayOpen(false),
       logAttempt,

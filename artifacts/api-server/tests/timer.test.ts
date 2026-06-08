@@ -76,6 +76,36 @@ test("timer usage expires when active elapsed time reaches the limit", () => {
   assert.equal(usage.isExpired, true);
 });
 
+test("timer usage applies parent-added time adjustments", () => {
+  const usage = calculateTimerUsage(10, [
+    {
+      id: 41,
+      startedAt: "2026-06-08T15:00:00.000Z",
+      endedAt: "2026-06-08T15:10:00.000Z",
+      minutesUsed: 10,
+    },
+  ], NOW, 5 * 60);
+
+  assert.equal(usage.timeAdjustmentSeconds, 5 * 60);
+  assert.equal(usage.secondsRemaining, 5 * 60);
+  assert.equal(usage.isExpired, false);
+});
+
+test("timer usage applies parent-removed time adjustments", () => {
+  const usage = calculateTimerUsage(10, [
+    {
+      id: 51,
+      startedAt: "2026-06-08T15:00:00.000Z",
+      endedAt: "2026-06-08T15:05:00.000Z",
+      minutesUsed: 5,
+    },
+  ], NOW, -5 * 60);
+
+  assert.equal(usage.timeAdjustmentSeconds, -5 * 60);
+  assert.equal(usage.secondsRemaining, 0);
+  assert.equal(usage.isExpired, true);
+});
+
 test("persisted session minutes round partial minutes up", () => {
   const session = {
     startedAt: "2026-06-08T15:28:01.000Z",

@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
 import { useSession } from "@/context/SessionContext";
 import { geographyQuestions } from "@/content/geography";
+import { GeoScene } from "@/components/GeoScene";
 
 const SPRITE = ARTWORK;
 
@@ -15,6 +16,7 @@ const TYPE_LABEL: Record<string, string> = {
   ocean: "Ocean",
   feature: "Land Feature",
   concept: "Explore",
+  climate: "Climate",
 };
 
 const TYPE_COLOR: Record<string, string> = {
@@ -22,6 +24,7 @@ const TYPE_COLOR: Record<string, string> = {
   ocean: "bg-pokemon-blue",
   feature: "bg-orange-500",
   concept: "bg-purple-500",
+  climate: "bg-teal-500",
 };
 
 function shuffle<T>(arr: T[]): T[] {
@@ -37,7 +40,7 @@ export default function GeographyPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [wrong, setWrong] = useState(false);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
@@ -46,7 +49,7 @@ export default function GeographyPage() {
 
   const advance = useCallback(() => {
     if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+    else { setIdx(i => i + 1); setSelected(null); setFeedback(null); }
   }, [idx, questions.length]);
 
   const handleAnswer = useCallback(async (choice: string) => {
@@ -57,10 +60,8 @@ export default function GeographyPage() {
     if (correct) setScore(s => s + 1);
     await logAttempt("geography", q.id, correct);
     setShowHint(false);
-    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
-    if (correct) setTimeout(advance, 1200);
-    else setWrong(true);
-  }, [selected, q, logAttempt, advance]);
+    setFeedback(correct ? "correct" : "wrong");
+  }, [selected, q, logAttempt]);
 
   if (done) {
     return (
@@ -113,7 +114,14 @@ export default function GeographyPage() {
             <span className={`inline-block ${typeColor} text-white text-base font-black px-4 py-1 rounded-full mb-3`}>
               {typeLabel}
             </span>
-            {q.pokemonId && (
+            {q.visual && (
+              <GeoScene
+                kind={q.visual}
+                label={q.visualLabel ?? q.answer}
+                className="mb-4"
+              />
+            )}
+            {!q.visual && q.pokemonId && (
               <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
             )}
             <p className="text-2xl font-bold text-gray-800 leading-snug">{q.question}</p>
@@ -143,15 +151,24 @@ export default function GeographyPage() {
             })}
           </div>
 
-          {wrong && (
+          {selected !== null && feedback && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+              className={`mt-5 w-full border-4 rounded-3xl p-5 text-center ${
+                feedback === "correct"
+                  ? "bg-green-50 border-green-200"
+                  : "bg-amber-50 border-amber-200"
+              }`}
             >
-              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
-              <p className="text-2xl font-black text-gray-800 mb-1">The answer is {q.answer}.</p>
-              {q.hint && <p className="text-xl font-bold text-green-600 mb-4">{q.hint}</p>}
+              <p className={`text-xl font-black mb-1 ${feedback === "correct" ? "text-green-700" : "text-amber-700"}`}>
+                {feedback === "correct" ? "Yes!" : "Not quite!"}
+              </p>
+              <p className="text-2xl font-black text-gray-800 mb-1">
+                {feedback === "correct" ? q.explanation ?? `${q.answer} is right.` : `The answer is ${q.answer}.`}
+              </p>
+              {feedback === "wrong" && q.explanation && <p className="text-xl font-bold text-green-600 mb-4">{q.explanation}</p>}
+              {feedback === "wrong" && !q.explanation && q.hint && <p className="text-xl font-bold text-green-600 mb-4">{q.hint}</p>}
               <button
                 onClick={advance}
                 className="bg-green-500 text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
@@ -161,7 +178,7 @@ export default function GeographyPage() {
             </motion.div>
           )}
 
-          {!wrong && !showHint && q.hint && selected === null && (
+          {!feedback && !showHint && q.hint && selected === null && (
             <button onClick={() => setShowHint(true)} className="mt-4 text-lg font-bold text-green-600 underline">
               Need a hint?
             </button>

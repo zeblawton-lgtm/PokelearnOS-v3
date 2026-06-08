@@ -6,7 +6,7 @@ import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map, Users } from "lu
 const modules = [
   { id: "math", label: "Math", sublabel: "Count, Add, Subtract", icon: BookOpen, color: "bg-pokemon-red", path: "/math" },
   { id: "spanish", label: "Spanish", sublabel: "Colors, Numbers, Greetings", icon: MessageCircle, color: "bg-pokemon-blue", path: "/spanish" },
-  { id: "geography", label: "World Explorer", sublabel: "Continents and Oceans", icon: Globe, color: "bg-green-500", path: "/geography" },
+  { id: "geography", label: "World Explorer", sublabel: "Regions, climates, maps", icon: Globe, color: "bg-green-500", path: "/geography" },
 ];
 
 export default function Home() {
@@ -79,7 +79,7 @@ export default function Home() {
           className="bg-green-400 rounded-3xl py-5 flex flex-col items-center justify-center gap-1 shadow-md min-h-[96px]"
         >
           <Map size={28} className="text-white" />
-          <span className="text-xl font-black text-white">Pokémon Homes</span>
+          <span className="text-xl font-black text-white">Regions</span>
         </motion.button>
       </div>
 

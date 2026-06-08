@@ -48,6 +48,8 @@ export interface SessionInfo {
   startedAt: string;
   minutesUsed: number;
   dailyLimitMinutes: number;
+  timeAdjustmentSeconds: number;
+  timeAdjustmentMinutes: number;
   minutesRemaining: number;
   secondsRemaining: number;
   isExpired: boolean;
@@ -58,6 +60,8 @@ export interface TimerState {
   sessionId: number | null;
   profileId: number;
   dailyLimitMinutes: number;
+  timeAdjustmentSeconds: number;
+  timeAdjustmentMinutes: number;
   minutesUsedToday: number;
   minutesRemaining: number;
   secondsRemaining: number;
@@ -76,6 +80,12 @@ export const api = {
 
   getTimer: (profileId: number) =>
     req<TimerState>("GET", `/timer/${profileId}`),
+
+  adjustTimer: (profileId: number, minutes: number) =>
+    req<TimerState>("POST", `/timer/${profileId}/adjust`, { minutes }),
+
+  resetTimer: (profileId: number) =>
+    req<TimerState>("POST", `/timer/${profileId}/reset`),
 
   logAttempt: (data: {
     sessionId: number;

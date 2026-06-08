@@ -10,7 +10,15 @@ import { isMusicMuted, setMusicMuted } from "@/lib/music";
 type Mode = "pin" | "settings";
 
 export function ParentOverlay() {
-  const { isParentOverlayOpen, closeParentOverlay, extendSession, endSession, profile, updateDailyLimit } = useSession();
+  const {
+    isParentOverlayOpen,
+    closeParentOverlay,
+    extendSession,
+    resetTodayTimer,
+    endSession,
+    profile,
+    updateDailyLimit,
+  } = useSession();
   const [mode, setMode] = useState<Mode>("pin");
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -75,6 +83,20 @@ export function ParentOverlay() {
       await extendSession(extraMinutes);
     } catch {
       setSettingsError("Could not update today's time.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetToday = async () => {
+    setLoading(true);
+    setSettingsError("");
+    setSettingsMessage("");
+    try {
+      await resetTodayTimer();
+      setSettingsMessage("Timer reset for today.");
+    } catch {
+      setSettingsError("Could not reset today's timer.");
     } finally {
       setLoading(false);
     }
@@ -177,22 +199,29 @@ export function ParentOverlay() {
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-2xl p-4">
-                  <p className="text-base font-bold text-gray-500 mb-2">Extend Today's Time</p>
+                  <p className="text-base font-bold text-gray-500 mb-2">Today's Timer</p>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => void handleExtendTime(-5)}
-                      disabled={loading || !profile || profile.dailyLimitMinutes <= 10}
+                      disabled={loading || !profile}
                       className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
                       <Minus size={24} />
                     </button>
                     <p className="flex-1 text-center text-xl font-black text-gray-700">+/- 5 min</p>
                     <button
                       onClick={() => void handleExtendTime(5)}
-                      disabled={loading || !profile || profile.dailyLimitMinutes >= 30}
+                      disabled={loading || !profile}
                       className="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center">
                       <Plus size={24} />
                     </button>
                   </div>
+                  <button
+                    onClick={() => void handleResetToday()}
+                    disabled={loading || !profile}
+                    className="mt-3 w-full bg-pokemon-yellow text-pokemon-darkred rounded-2xl py-3 text-base font-black min-h-[52px] disabled:opacity-50"
+                  >
+                    Reset Today
+                  </button>
                 </div>
 
                 {profile && (

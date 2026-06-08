@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { sessionsTable, profilesTable } from "@workspace/db/schema";
+import { sessionsTable, profilesTable, settingsTable } from "@workspace/db/schema";
 import { eq, and, gte, isNull, lt } from "drizzle-orm";
 import {
   calculateTimerUsage,
+  localDayKey,
   persistedMinutesForSession,
   startOfLocalDay,
   type SessionUsage,
 } from "../lib/timer";
+import { requireAdminAuth } from "../lib/admin-auth";
 
 const router = Router();
 
@@ -59,11 +61,60 @@ router.get("/timer/:profileId", async (req, res) => {
   res.json(timer);
 });
 
-async function getTimerState(profileId: number) {
+router.post("/timer/:profileId/adjust", requireAdminAuth, async (req, res) => {
+  const profileId = parseInt(String(req.params.profileId), 10);
+  if (!Number.isInteger(profileId)) { res.status(400).json({ error: "profileId must be an integer" }); return; }
+
+  const minutes = Number(req.body?.minutes);
+  if (!Number.isInteger(minutes) || minutes < -30 || minutes > 30 || minutes === 0) {
+    res.status(400).json({ error: "minutes must be an integer from -30 to 30, excluding 0" }); return;
+  }
+
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
+  if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
+
+  const current = await getTimerAdjustmentSeconds(profileId);
+  await setTimerAdjustmentSeconds(profileId, current + minutes * 60);
+
+  const timer = await getTimerState(profileId);
+  if (!timer) { res.status(404).json({ error: "Profile not found" }); return; }
+
+  if (timer.isExpired && timer.openSessionCount > 0) {
+    await closeOpenSessions(profileId);
+    res.json(await getTimerState(profileId));
+    return;
+  }
+
+  res.json(timer);
+});
+
+router.post("/timer/:profileId/reset", requireAdminAuth, async (req, res) => {
+  const profileId = parseInt(String(req.params.profileId), 10);
+  if (!Number.isInteger(profileId)) { res.status(400).json({ error: "profileId must be an integer" }); return; }
+
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
+  if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
+
+  await closeOpenSessions(profileId);
+  const now = new Date();
+  const today = startOfLocalDay(now);
+  const sessions = await db.select()
+    .from(sessionsTable)
+    .where(and(
+      eq(sessionsTable.profileId, profileId),
+      gte(sessionsTable.startedAt, today),
+    ));
+  const usage = calculateTimerUsage(profile.dailyLimitMinutes, sessions as SessionUsage[], now, 0);
+  await setTimerAdjustmentSeconds(profileId, usage.secondsUsedToday);
+
+  res.json(await getTimerState(profileId, now));
+});
+
+async function getTimerState(profileId: number, now = new Date()) {
   const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
   if (!profile) return null;
 
-  const today = startOfLocalDay();
+  const today = startOfLocalDay(now);
   await closeOpenSessionsBefore(profileId, today);
 
   const sessions = await db.select()
@@ -76,18 +127,42 @@ async function getTimerState(profileId: number) {
   const usage = calculateTimerUsage(
     profile.dailyLimitMinutes,
     sessions as SessionUsage[],
+    now,
+    await getTimerAdjustmentSeconds(profileId, now),
   );
 
   return {
     sessionId: usage.activeSessionId,
     profileId,
     dailyLimitMinutes: profile.dailyLimitMinutes,
+    timeAdjustmentSeconds: usage.timeAdjustmentSeconds,
+    timeAdjustmentMinutes: Math.ceil(usage.timeAdjustmentSeconds / 60),
     minutesUsedToday: usage.minutesUsedToday,
     minutesRemaining: usage.minutesRemaining,
     secondsRemaining: usage.secondsRemaining,
     openSessionCount: usage.openSessionCount,
     isExpired: usage.isExpired,
   };
+}
+
+async function getTimerAdjustmentSeconds(profileId: number, now = new Date()): Promise<number> {
+  const setting = await db.query.settingsTable.findFirst({
+    where: eq(settingsTable.key, timerAdjustmentKey(profileId, now)),
+  });
+  const seconds = Number(setting?.value ?? 0);
+  return Number.isFinite(seconds) ? Math.trunc(seconds) : 0;
+}
+
+async function setTimerAdjustmentSeconds(profileId: number, seconds: number, now = new Date()): Promise<void> {
+  const key = timerAdjustmentKey(profileId, now);
+  const value = String(Math.trunc(seconds));
+  await db.insert(settingsTable)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: settingsTable.key, set: { value, updatedAt: new Date() } });
+}
+
+function timerAdjustmentKey(profileId: number, now = new Date()): string {
+  return `timer_adjustment:${profileId}:${localDayKey(now)}`;
 }
 
 async function closeOpenSessionsBefore(profileId: number, before: Date): Promise<void> {

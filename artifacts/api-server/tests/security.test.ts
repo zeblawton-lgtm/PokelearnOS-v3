@@ -68,6 +68,17 @@ test("unauthenticated profile writes fail", async () => {
   }
 });
 
+test("unauthenticated timer writes fail", async () => {
+  const writes = [
+    request("POST", "/timer/1/adjust", { minutes: 5 }),
+    request("POST", "/timer/1/reset"),
+  ];
+
+  for (const response of await Promise.all(writes)) {
+    assert.equal(response.status, 401);
+  }
+});
+
 test("issued admin bearer tokens are signed and verifiable", async () => {
   const issued = auth.issueAdminToken();
   assert.equal(typeof issued.token, "string");

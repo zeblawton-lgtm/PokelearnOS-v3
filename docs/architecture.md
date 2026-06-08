@@ -20,6 +20,7 @@
 │  /api/profiles      GET profiles; admin POST/PATCH       │
 │  /api/sessions      POST start/end sessions              │
 │  /api/timer/:id     GET daily time remaining             │
+│  /api/timer/:id/*   admin add/reset today's time         │
 │  /api/attempts      POST log question attempts           │
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
@@ -36,7 +37,7 @@
 │  attempts    id, sessionId, profileId, module,          │
 │              questionId, correct, answeredAt             │
 │  settings    id, key, value, updatedAt                   │
-│              (parent_pin_hash stored here)               │
+│              (parent_pin_hash and timer adjustments)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -74,11 +75,12 @@ App
    → Backend closes any open session and returns isExpired=true
    → isResting = true
    → RestScreen displayed (fullscreen overlay)
-   → Only parent PIN can increase the daily limit or end the day
+   → Only parent PIN can add/reset today's time or end the day
 
 4. Parent unlocks
    → POST /api/admin/verify-pin {pin}
-   → If valid: authenticated PATCH /api/profiles/:id changes dailyLimitMinutes
+   → If valid: authenticated POST /api/timer/:id/adjust adds today-only time
+   → Parent settings can also PATCH /api/profiles/:id for the normal daily cap
    → If end: POST /api/sessions/:id/end, navigate to ProfileSelect
 ```
 
@@ -97,6 +99,10 @@ src/content/
 ```
 
 Questions are shuffled per session — children see different orders each time.
+World Explorer questions can include bundled visual scenes for places such as
+the Sahara, Amazon rainforest, Antarctica, reefs, and the equator. Pokédex
+entries derive child-friendly real-world habitat/climate examples from Pokémon
+types plus a few curated overrides.
 
 ## Security Model
 

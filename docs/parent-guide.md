@@ -46,7 +46,8 @@ the **Rest Screen** appears and the child cannot continue until you unlock.
 A PIN entry overlay appears. Enter your PIN (default: **1234**).
 
 From the parent panel:
-- Add or remove time (+/– 5 minutes)
+- Add or remove today's time (+/– 5 minutes)
+- Reset today's timer without changing the normal daily limit
 - Adjust the child's daily time limit
 - Change the parent PIN
 - End the session and return to profile select
@@ -69,7 +70,11 @@ From the parent panel:
 
 Tap the corner lock icon → enter PIN → Session Settings.
 
-Or via the API (advanced — while backend is running):
+The daily limit is the normal per-day cap. The parent panel's **Today's Timer**
+controls are separate: they add/remove time just for the current day, or reset
+today's used time back to zero.
+
+Via the API (advanced — while backend is running):
 ```bash
 curl -s -X POST http://localhost:8765/api/admin/verify-pin \
   -H "Content-Type: application/json" \
@@ -77,10 +82,21 @@ curl -s -X POST http://localhost:8765/api/admin/verify-pin \
 
 TOKEN="paste-token-from-response"
 
+# Normal daily cap, allowed range: 10-30 minutes
 curl -X PATCH http://localhost:8765/api/profiles/1 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${TOKEN}" \
   -d '{"dailyLimitMinutes": 25}'
+
+# Add 5 minutes for today only
+curl -X POST http://localhost:8765/api/timer/1/adjust \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -d '{"minutes": 5}'
+
+# Reset today's timer
+curl -X POST http://localhost:8765/api/timer/1/reset \
+  -H "Authorization: Bearer ${TOKEN}"
 ```
 
 ---

@@ -6,6 +6,8 @@ import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { pokedex, TYPE_COLORS, type PokedexEntry } from "@/content/pokedex";
 import { playTap, speak } from "@/lib/sound";
 import { markPokemonLearned } from "@/lib/storage";
+import { GeoScene } from "@/components/GeoScene";
+import { getPokemonHabitat } from "@/lib/pokemonHabitat";
 
 export default function PokedexPage() {
   const [, navigate] = useLocation();
@@ -18,6 +20,7 @@ export default function PokedexPage() {
     markPokemonLearned(p.id);
     setActive(p);
   };
+  const activeHabitat = active ? getPokemonHabitat(active.id, active.types) : null;
 
   // Filter by name, number, or type. 1025 entries, so match is cheap but we
   // memoize to avoid re-filtering on unrelated re-renders.
@@ -91,18 +94,31 @@ export default function PokedexPage() {
             <motion.div
               initial={{ scale: 0.85, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 26 }}
-              className="bg-white rounded-4xl w-full max-w-sm p-6 text-center relative"
+              className="bg-white rounded-4xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-6 text-center relative"
             >
               <button onClick={() => setActive(null)} className="absolute top-4 right-4 w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Close">
                 <X size={20} />
               </button>
-              <img src={ARTWORK(active.id)} onError={onSpriteError} alt={active.name} className="w-80 h-80 object-contain mx-auto drop-shadow-xl mb-2" />
+              <img src={ARTWORK(active.id)} onError={onSpriteError} alt={active.name} className="w-56 h-56 object-contain mx-auto drop-shadow-xl mb-2" />
               <h2 className="text-4xl font-black text-gray-800">{active.name}</h2>
               <div className="flex gap-2 justify-center my-3">
                 {active.types.map((t) => (
                   <span key={t} className={`${TYPE_COLORS[t] ?? "bg-gray-400"} text-white text-base font-black px-4 py-1 rounded-full`}>{t}</span>
                 ))}
               </div>
+              {activeHabitat && (
+                <div className="my-4 rounded-3xl bg-green-50 p-3 text-left">
+                  <GeoScene
+                    kind={activeHabitat.scene}
+                    label={activeHabitat.examplePlace}
+                    className="mb-3 min-h-[150px]"
+                  />
+                  <p className="text-sm font-black uppercase text-green-700">Where it might live</p>
+                  <p className="text-2xl font-black text-gray-800">{activeHabitat.biome}</p>
+                  <p className="text-lg font-bold text-gray-600">Climate: {activeHabitat.climate}</p>
+                  <p className="mt-1 text-base font-bold text-gray-600 leading-snug">{activeHabitat.note}</p>
+                </div>
+              )}
               <p className="text-xl font-bold text-gray-600 leading-snug">{active.fact}</p>
               <button
                 onClick={() => speak(active.name, "en-US")}
