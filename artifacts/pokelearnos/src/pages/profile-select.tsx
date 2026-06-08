@@ -90,11 +90,11 @@ export default function ProfileSelect() {
             disabled={isLoading}
             className="flex-1 bg-white rounded-4xl shadow-xl border-4 border-gray-100 p-8 flex flex-col items-center gap-4 hover:border-pokemon-yellow hover:shadow-2xl transition-all"
           >
-            <div className="w-32 h-32 rounded-full bg-pokemon-yellow/20 flex items-center justify-center overflow-hidden">
+            <div className="w-48 h-48 rounded-full bg-pokemon-yellow/20 flex items-center justify-center overflow-hidden">
               <img
                 src={SPRITE(profile.avatarPokemonId)}
                 alt={profile.name}
-                className="w-28 h-28 object-contain drop-shadow-md"
+                className="w-44 h-44 object-contain drop-shadow-md"
                 onError={e => { (e.target as HTMLImageElement).src = SPRITE(25); }}
               />
             </div>

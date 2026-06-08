@@ -56,7 +56,7 @@ export default function RestScreen() {
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
-          <img src={SPRITE(143)} alt="Snorlax" className="w-48 h-48 drop-shadow-2xl mb-6" />
+          <img src={SPRITE(143)} alt="Snorlax" className="w-64 h-64 drop-shadow-2xl mb-6" />
         </motion.div>
 
         <h1 className="text-5xl font-black text-white mb-3">Rest Time!</h1>
