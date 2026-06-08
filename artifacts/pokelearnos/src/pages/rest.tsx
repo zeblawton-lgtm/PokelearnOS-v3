@@ -27,7 +27,7 @@ export default function RestScreen() {
   const handleSwitch = async () => {
     if (!other) return;
     await endSession();
-    await startSession(other, other.dailyLimitMinutes);
+    await startSession(other);
     navigate("/home");
   };
 
@@ -45,13 +45,17 @@ export default function RestScreen() {
         setPinError(false);
         setShowPin(false);
         setPin("");
+        await extendSession(15);
         clearAdminAuth();
-        extendSession(15);
         navigate("/home");
       } else {
         setPinError(true);
         setPin("");
       }
+    } catch {
+      setPinError(true);
+      setPin("");
+      clearAdminAuth();
     } finally {
       setLoading(false);
     }
@@ -73,7 +77,7 @@ export default function RestScreen() {
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
-          <img src={SPRITE(143)} alt="Snorlax" className="w-72 h-72 drop-shadow-2xl mb-6" />
+          <img src={SPRITE(143)} onError={onSpriteError} alt="Snorlax" className="w-72 h-72 drop-shadow-2xl mb-6" />
         </motion.div>
 
         <h1 className="text-5xl font-black text-white mb-3">Rest Time!</h1>

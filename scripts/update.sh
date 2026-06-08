@@ -8,7 +8,7 @@
 #   sudo bash scripts/update.sh --no-pull  # deploy current checkout as-is
 #
 # WHAT THIS SCRIPT DOES:
-#   1. git pull origin main (unless --no-pull)
+#   1. git pull the current branch, or POKELEARNOS_UPDATE_REF (unless --no-pull)
 #   2. pnpm install + build frontend & backend
 #   3. rsync built output to /opt/pokelearnos/ (same layout as install.sh)
 #   4. Restart pokelearnos.service for the kids user
@@ -45,8 +45,14 @@ NO_PULL=0
 # 1. Pull latest code
 # ---------------------------------------------------------------------------
 if [[ "${NO_PULL}" -eq 0 ]]; then
-  step "Pulling latest code (origin/main)"
-  git -C "${REPO_DIR}" pull --ff-only origin main || \
+  CURRENT_BRANCH="$(git -C "${REPO_DIR}" branch --show-current 2>/dev/null || true)"
+  UPDATE_REF="${POKELEARNOS_UPDATE_REF:-${CURRENT_BRANCH:-repair/kiosk-release}}"
+  step "Pulling latest code (origin/${UPDATE_REF})"
+  git -C "${REPO_DIR}" fetch origin "${UPDATE_REF}" || \
+    die "git fetch failed for origin/${UPDATE_REF}."
+  git -C "${REPO_DIR}" checkout "${UPDATE_REF}" || \
+    die "git checkout failed for ${UPDATE_REF}."
+  git -C "${REPO_DIR}" pull --ff-only origin "${UPDATE_REF}" || \
     die "git pull failed. Fix the checkout or re-run with --no-pull."
   ok "Now at $(git -C "${REPO_DIR}" log --oneline -1)"
 else
@@ -119,7 +125,8 @@ if [[ -f "${INSTALL_DIR}/.env" ]]; then
 fi
 chmod -R o+rX "${INSTALL_DIR}"
 chmod +x "${INSTALL_DIR}/system/kiosk-launcher.sh" \
-         "${INSTALL_DIR}/system/kiosk-lockdown.sh" 2>/dev/null || true
+         "${INSTALL_DIR}/system/kiosk-lockdown.sh" \
+         "${INSTALL_DIR}/system/parent-admin-exit.sh" 2>/dev/null || true
 ok "Permissions set."
 
 # ---------------------------------------------------------------------------

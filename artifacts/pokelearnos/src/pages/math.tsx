@@ -55,6 +55,7 @@ function CountVisual({ count, id, name }: { count: number; id: number; name: str
         <motion.img
           key={i}
           src={SPRITE(id)}
+          onError={onSpriteError}
           alt={name}
           className={`${sz} object-contain`}
           initial={{ scale: 0, opacity: 0 }}
@@ -76,6 +77,7 @@ function AddVisual({ a, b, id, name }: { a: number; b: number; id: number; name:
           <motion.img
             key={`a${i}`}
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt={name}
             className={`${sz} object-contain`}
             initial={{ scale: 0 }}
@@ -90,6 +92,7 @@ function AddVisual({ a, b, id, name }: { a: number; b: number; id: number; name:
           <motion.img
             key={`b${i}`}
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt={name}
             className={`${sz} object-contain`}
             initial={{ scale: 0 }}
@@ -112,6 +115,7 @@ function SubtractVisual({ a, b, id, name }: { a: number; b: number; id: number; 
         <motion.img
           key={`r${i}`}
           src={SPRITE(id)}
+          onError={onSpriteError}
           alt={name}
           className={`${sz} object-contain`}
           initial={{ scale: 0 }}
@@ -130,6 +134,7 @@ function SubtractVisual({ a, b, id, name }: { a: number; b: number; id: number; 
         >
           <img
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt=""
             className={`${sz} object-contain opacity-20 grayscale`}
           />
@@ -151,6 +156,7 @@ function MultiplyVisual({ a, b, id, name }: { a: number; b: number; id: number; 
             <motion.img
               key={col}
               src={SPRITE(id)}
+              onError={onSpriteError}
               alt={name}
               className="w-20 h-20 object-contain"
               initial={{ scale: 0 }}
@@ -186,7 +192,7 @@ function QuestionVisual({
     return <MultiplyVisual a={q5.a ?? 2} b={q5.b ?? 2} id={pokemonId} name={pokemonName} />;
   }
   // Word problem — large sprite of the named Pokémon
-  return <img src={SPRITE(q.pokemonId)} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
+  return <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
 }
 
 function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
@@ -240,7 +246,7 @@ export default function MathPage() {
     setSelected(choice);
     const correct = choice === q.answer;
     if (correct) playCorrect(); else playWrong();
-    if (correct) { setScore(s => s + 1); setStreak(s => s + 1); }
+    if (correct) { setScore(s => s + 1); if (!is3yo) setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);
     setTimeout(() => {
@@ -260,6 +266,7 @@ export default function MathPage() {
         >
           <img
             src={SPRITE(gamePokemon.id)}
+            onError={onSpriteError}
             alt={gamePokemon.name}
             className="w-64 h-64 mx-auto mb-4 drop-shadow-xl"
           />
@@ -356,7 +363,7 @@ export default function MathPage() {
             })}
           </div>
 
-          {streak >= 3 && (
+          {!is3yo && streak >= 3 && (
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

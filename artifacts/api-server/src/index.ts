@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { profilesTable } from "@workspace/db/schema";
 
 // Auto-seed default profiles on a fresh database (kiosk first boot).
-// Same data as POST /api/admin/seed — that endpoint stays for manual re-seeding.
+// Same defaults as the protected manual re-seeding endpoint.
 async function seedIfEmpty(): Promise<void> {
   const existing = await db.select().from(profilesTable);
   if (existing.length > 0) return;

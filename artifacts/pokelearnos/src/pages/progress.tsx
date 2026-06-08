@@ -52,7 +52,7 @@ export default function Progress() {
           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-3xl shadow-md p-6 mb-5 flex items-center gap-5"
         >
-          <img src={SPRITE(profile.avatarPokemonId)} alt={profile.name} className="w-36 h-36 object-contain" />
+          <img src={SPRITE(profile.avatarPokemonId)} onError={onSpriteError} alt={profile.name} className="w-36 h-36 object-contain" />
           <div>
             <p className="text-3xl font-black text-gray-800">{profile.name}</p>
             <p className="text-xl text-gray-500 font-bold">Age {profile.age} Trainer</p>

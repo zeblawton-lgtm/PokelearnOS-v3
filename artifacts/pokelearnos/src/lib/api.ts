@@ -47,14 +47,21 @@ export interface SessionInfo {
   profileId: number;
   startedAt: string;
   minutesUsed: number;
+  dailyLimitMinutes: number;
+  minutesRemaining: number;
+  secondsRemaining: number;
+  isExpired: boolean;
+  openSessionCount: number;
 }
 
 export interface TimerState {
-  sessionId: number;
+  sessionId: number | null;
   profileId: number;
   dailyLimitMinutes: number;
   minutesUsedToday: number;
   minutesRemaining: number;
+  secondsRemaining: number;
+  openSessionCount: number;
   isExpired: boolean;
 }
 

@@ -26,7 +26,7 @@ export default function ProfileSelect() {
 
   const handleSelect = async (profile: Profile) => {
     playTap();
-    await startSession(profile, profile.dailyLimitMinutes);
+    await startSession(profile);
     navigate("/home");
   };
 
@@ -69,9 +69,9 @@ export default function ProfileSelect() {
       >
         <img
           src={SPRITE(25)}
+          onError={onSpriteError}
           alt="Pikachu"
           className="w-32 h-32 mx-auto mb-4 drop-shadow-xl"
-          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
         />
         <h1 className="text-5xl font-black text-pokemon-red">PokelearnOS</h1>
         <p className="text-2xl text-gray-600 mt-2 font-bold">Who is learning today?</p>
@@ -93,9 +93,9 @@ export default function ProfileSelect() {
             <div className="w-64 h-64 rounded-full bg-pokemon-yellow/20 flex items-center justify-center overflow-hidden">
               <img
                 src={SPRITE(profile.avatarPokemonId)}
+                onError={onSpriteError}
                 alt={profile.name}
                 className="w-56 h-56 object-contain drop-shadow-md"
-                onError={e => { (e.target as HTMLImageElement).src = SPRITE(25); }}
               />
             </div>
             <div>
@@ -114,9 +114,9 @@ export default function ProfileSelect() {
           <p className="text-xl text-gray-500">No profiles found.</p>
           <button
             className="mt-4 bg-pokemon-blue text-white text-xl font-black px-6 py-3 rounded-3xl"
-            onClick={() => fetch("/api/admin/seed", { method: "POST" }).then(() => window.location.reload())}
+            onClick={() => window.location.reload()}
           >
-            Setup Profiles
+            Reload
           </button>
         </div>
       )}

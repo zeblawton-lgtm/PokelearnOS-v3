@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
-import { api, type Profile, type SessionInfo } from "@/lib/api";
+import { api, type Profile, type SessionInfo, type TimerState } from "@/lib/api";
 import * as music from "@/lib/music";
 
 interface SessionState {
@@ -12,9 +12,10 @@ interface SessionState {
 }
 
 interface SessionActions {
-  startSession: (profile: Profile, limitMinutes: number) => Promise<void>;
+  startSession: (profile: Profile) => Promise<void>;
   endSession: () => Promise<void>;
-  extendSession: (extraMinutes: number) => void;
+  extendSession: (extraMinutes: number) => Promise<void>;
+  updateDailyLimit: (dailyLimitMinutes: number) => Promise<void>;
   openParentOverlay: () => void;
   closeParentOverlay: () => void;
   logAttempt: (module: string, questionId: string, correct: boolean) => Promise<void>;
@@ -30,6 +31,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [isParentOverlayOpen, setIsParentOverlayOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionRef = useRef<SessionInfo | null>(null);
+  const profileRef = useRef<Profile | null>(null);
+
+  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -38,36 +44,90 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const expireSession = useCallback(() => {
+    const current = sessionRef.current;
+    if (current) {
+      void api.endSession(current.id).catch(() => {});
+    }
+    setSession(null);
+    setSecondsRemaining(0);
+    setIsResting(true);
+  }, []);
+
   const startTimer = useCallback((seconds: number) => {
     stopTimer();
     setSecondsRemaining(seconds);
+    if (seconds <= 0) {
+      expireSession();
+      return;
+    }
     timerRef.current = setInterval(() => {
       setSecondsRemaining(prev => {
         if (prev <= 1) {
           stopTimer();
-          setIsResting(true);
+          expireSession();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, [stopTimer]);
+  }, [expireSession, stopTimer]);
 
   useEffect(() => () => stopTimer(), [stopTimer]);
 
-  const startSession = useCallback(async (p: Profile, limitMinutes: number) => {
+  const applyTimerState = useCallback((timer: TimerState) => {
+    setSecondsRemaining(timer.secondsRemaining);
+    if (timer.isExpired) {
+      stopTimer();
+      setSession(null);
+      setIsResting(true);
+      return;
+    }
+    setIsResting(false);
+    startTimer(timer.secondsRemaining);
+  }, [startTimer, stopTimer]);
+
+  const startSession = useCallback(async (p: Profile) => {
     music.playScene("menu"); // begin music within the user gesture (autoplay unlock)
     setIsLoading(true);
     try {
+      const timer = await api.getTimer(p.id);
+      setProfile({ ...p, dailyLimitMinutes: timer.dailyLimitMinutes });
+      if (timer.isExpired) {
+        setSession(null);
+        applyTimerState(timer);
+        return;
+      }
+
       const sess = await api.startSession(p.id);
-      setProfile(p);
+      setProfile({ ...p, dailyLimitMinutes: sess.dailyLimitMinutes });
       setSession(sess);
       setIsResting(false);
-      startTimer(limitMinutes * 60);
+      startTimer(sess.secondsRemaining);
     } finally {
       setIsLoading(false);
     }
-  }, [startTimer]);
+  }, [applyTimerState, startTimer]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    let cancelled = false;
+    const refreshTimer = async () => {
+      const timer = await api.getTimer(profile.id).catch(() => null);
+      if (!timer || cancelled) return;
+      setProfile(prev => {
+        if (!prev || prev.dailyLimitMinutes === timer.dailyLimitMinutes) return prev;
+        return { ...prev, dailyLimitMinutes: timer.dailyLimitMinutes };
+      });
+      applyTimerState(timer);
+    };
+    const id = setInterval(refreshTimer, 15000);
+    void refreshTimer();
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [applyTimerState, profile?.id]);
 
   const endSession = useCallback(async () => {
     music.stop();
@@ -82,12 +142,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsParentOverlayOpen(false);
   }, [session, stopTimer]);
 
-  const extendSession = useCallback((extraMinutes: number) => {
-    const extra = extraMinutes * 60;
-    setSecondsRemaining(prev => prev + extra);
-    setIsResting(false);
-    startTimer(secondsRemaining + extra);
-  }, [secondsRemaining, startTimer]);
+  const updateDailyLimit = useCallback(async (dailyLimitMinutes: number) => {
+    const current = profileRef.current;
+    if (!current) return;
+    const updated = await api.updateProfile(current.id, { dailyLimitMinutes });
+    setProfile(updated);
+    const timer = await api.getTimer(updated.id);
+    applyTimerState(timer);
+  }, [applyTimerState]);
+
+  const extendSession = useCallback(async (extraMinutes: number) => {
+    const current = profileRef.current;
+    if (!current) return;
+    const nextLimit = Math.max(10, Math.min(30, current.dailyLimitMinutes + extraMinutes));
+    const updated = await api.updateProfile(current.id, { dailyLimitMinutes: nextLimit });
+    setProfile(updated);
+    const timer = await api.getTimer(updated.id);
+    if (!timer.isExpired && !sessionRef.current) {
+      const sess = await api.startSession(updated.id);
+      setSession(sess);
+      setIsResting(false);
+      startTimer(sess.secondsRemaining);
+      return;
+    }
+    applyTimerState(timer);
+  }, [applyTimerState, startTimer]);
 
   const logAttempt = useCallback(async (module: string, questionId: string, correct: boolean) => {
     if (!session || !profile) return;
@@ -97,7 +176,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionContext.Provider value={{
       profile, session, secondsRemaining, isResting, isParentOverlayOpen, isLoading,
-      startSession, endSession, extendSession,
+      startSession, endSession, extendSession, updateDailyLimit,
       openParentOverlay: () => setIsParentOverlayOpen(true),
       closeParentOverlay: () => setIsParentOverlayOpen(false),
       logAttempt,

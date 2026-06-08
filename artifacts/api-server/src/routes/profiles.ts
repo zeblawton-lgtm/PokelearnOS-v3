@@ -21,8 +21,12 @@ router.post("/profiles", requireAdminAuth, async (req, res) => {
 router.patch("/profiles/:id", requireAdminAuth, async (req, res) => {
   const id = parseInt(String(req.params.id), 10);
   const { dailyLimitMinutes } = req.body;
-  if (typeof dailyLimitMinutes !== "number" || dailyLimitMinutes < 1) {
-    res.status(400).json({ error: "dailyLimitMinutes must be a positive number" }); return;
+  if (
+    !Number.isInteger(dailyLimitMinutes) ||
+    dailyLimitMinutes < 10 ||
+    dailyLimitMinutes > 30
+  ) {
+    res.status(400).json({ error: "dailyLimitMinutes must be an integer from 10 to 30" }); return;
   }
   const [updated] = await db.update(profilesTable)
     .set({ dailyLimitMinutes })

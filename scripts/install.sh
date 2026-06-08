@@ -40,6 +40,7 @@ set -euo pipefail
 INSTALL_DIR="/opt/pokelearnos"
 KIDS_USER="kids"
 PARENT_USER="parent"
+LEGACY_USER="pokelearnos"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICE_NAME="pokelearnos.service"
 SERVICE_SRC="${REPO_DIR}/system/${SERVICE_NAME}"
@@ -77,7 +78,7 @@ require_root
 [[ "${SUDO_USER:-}" == "${KIDS_USER}" ]] && die "Do not run install.sh as the ${KIDS_USER} user."
 
 if ! grep -q 'VERSION_ID="26.04"' /etc/os-release 2>/dev/null; then
-  warn "Not Ubuntu 26.04 LTS — PokéLearnOS is tested on 26.04 (Resolute Raccoon)."
+  warn "Not Ubuntu 26.04 LTS — PokéLearnOS is tested on 26.04."
   confirm "Continue anyway?" "n" || die "Aborted."
 fi
 
@@ -117,13 +118,13 @@ fi
 # ---------------------------------------------------------------------------
 step "2/11: Create '${KIDS_USER}' kiosk user"
 
-info "The kids user: no password (locked), no sudo, GDM autologin."
+info "The kids user: no password (locked), no sudo, no shell, GDM autologin."
 
 if id "${KIDS_USER}" &>/dev/null; then
   ok "User '${KIDS_USER}' already exists — skipping creation."
 else
   if confirm "Create kiosk user '${KIDS_USER}'?" "y"; then
-    useradd --create-home --shell /bin/bash \
+    useradd --create-home --shell /usr/sbin/nologin \
       --comment "PokéLearnOS Kiosk User" "${KIDS_USER}"
     usermod -L "${KIDS_USER}"
     ok "Kiosk user '${KIDS_USER}' created (password locked)."
@@ -132,8 +133,34 @@ else
   fi
 fi
 
+usermod --shell /usr/sbin/nologin "${KIDS_USER}"
+usermod -L "${KIDS_USER}"
+if id -nG "${KIDS_USER}" | tr ' ' '\n' | grep -qx sudo; then
+  gpasswd -d "${KIDS_USER}" sudo >/dev/null 2>&1 || true
+fi
+
 KIDS_HOME="/home/${KIDS_USER}"
 KIDS_UID="$(id -u "${KIDS_USER}")"
+
+if id "${LEGACY_USER}" &>/dev/null; then
+  warn "Legacy user '${LEGACY_USER}' exists. Locking it and disabling shell."
+  usermod -L "${LEGACY_USER}" || true
+  usermod --shell /usr/sbin/nologin "${LEGACY_USER}" || true
+fi
+
+LEGACY_STAMP="$(date +%Y%m%d%H%M%S)"
+if [[ -f /etc/systemd/system/pokelearnos.service ]]; then
+  systemctl disable --now pokelearnos.service >/dev/null 2>&1 || true
+  mv /etc/systemd/system/pokelearnos.service "/etc/systemd/system/pokelearnos.service.legacy-${LEGACY_STAMP}"
+  systemctl daemon-reload || true
+  ok "Legacy system service quarantined."
+fi
+for legacy_path in /var/lib/pokelearnos /var/log/pokelearnos; do
+  if [[ -e "${legacy_path}" ]]; then
+    mv "${legacy_path}" "${legacy_path}.legacy-${LEGACY_STAMP}"
+    ok "Legacy path quarantined: ${legacy_path}.legacy-${LEGACY_STAMP}"
+  fi
+done
 
 # ---------------------------------------------------------------------------
 # Step 3 — Install system packages
@@ -291,7 +318,8 @@ PKGEOF
   chown -R root:root "${INSTALL_DIR}"
   chmod -R o+rX "${INSTALL_DIR}"
   chmod +x "${INSTALL_DIR}/system/kiosk-launcher.sh" \
-           "${INSTALL_DIR}/system/kiosk-lockdown.sh" 2>/dev/null || true
+           "${INSTALL_DIR}/system/kiosk-lockdown.sh" \
+           "${INSTALL_DIR}/system/parent-admin-exit.sh" 2>/dev/null || true
   ok "Permissions set: root:root, world-readable, scripts executable."
 fi
 
@@ -335,8 +363,7 @@ fi
 # ---------------------------------------------------------------------------
 step "7/11: Seed default profiles (Leo, Michael)"
 
-info "Profiles are seeded on first API request via POST /api/admin/seed."
-info "They will be created automatically when the kiosk first starts."
+info "Profiles are seeded automatically when the kiosk backend starts."
 info "  Leo:     age 3, Jigglypuff avatar, 15 min/day"
 info "  Michael: age 5, Pikachu avatar, 20 min/day"
 ok "Profile seeding configured (auto-seeds on first run)."

@@ -13,7 +13,7 @@
 | Preview loads frontend | PASS | Profile selector renders with Pikachu/Jigglypuff avatars |
 | Backend health endpoint | PASS | `GET /api/healthz` → `{"status":"ok"}` |
 | PostgreSQL initializes | PASS | `pnpm --filter @workspace/db run push` succeeded |
-| Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded via `/api/admin/seed` |
+| Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded automatically on fresh database startup |
 | Profiles API | PASS | `GET /api/profiles` returns both profiles |
 | Session start API | PASS | `POST /api/sessions/start` returns session object |
 | Timer API | PASS | `GET /api/timer/1` returns `{minutesRemaining: 20, isExpired: false}` |
@@ -44,7 +44,7 @@ GET  /api/timer/1              → 200 {minutesRemaining: 20}
 POST /api/attempts             → 201 {attempt}
 GET  /api/stats/1              → 200 {totalCorrect, totalAttempts, moduleBreakdown}
 POST /api/admin/verify-pin     → 200 {valid: true}  (PIN: 1234)
-POST /api/admin/seed           → 201 {profiles seeded}
+POST /api/admin/seed           → 401 without admin bearer token
 ```
 
 ## Known Gaps / Future Work

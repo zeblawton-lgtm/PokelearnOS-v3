@@ -48,6 +48,7 @@ A PIN entry overlay appears. Enter your PIN (default: **1234**).
 From the parent panel:
 - Add or remove time (+/– 5 minutes)
 - Adjust the child's daily time limit
+- Change the parent PIN
 - End the session and return to profile select
 
 **Change your PIN from 1234 immediately after setup.**
@@ -58,9 +59,9 @@ From the parent panel:
 
 1. Press **Ctrl+Alt+F1** — this reaches a login terminal
 2. Login as your parent account (default username: `parent`)
-3. `sudo systemctl stop pokelearnos` — stops the kiosk
-4. `journalctl _UID=$(id -u kids) -n 50` — view logs if something is broken
-5. `sudo systemctl start pokelearnos` — restart the kiosk
+3. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user stop pokelearnos.service` — stops the kiosk
+4. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) journalctl --user -u pokelearnos.service -n 50` — view logs if something is broken
+5. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user start pokelearnos.service` — restart the kiosk
 
 ---
 
@@ -70,8 +71,15 @@ Tap the corner lock icon → enter PIN → Session Settings.
 
 Or via the API (advanced — while backend is running):
 ```bash
+curl -s -X POST http://localhost:8765/api/admin/verify-pin \
+  -H "Content-Type: application/json" \
+  -d '{"pin":"1234"}'
+
+TOKEN="paste-token-from-response"
+
 curl -X PATCH http://localhost:8765/api/profiles/1 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -d '{"dailyLimitMinutes": 25}'
 ```
 
@@ -99,23 +107,16 @@ pnpm install
 BASE_PATH=/ pnpm --filter @workspace/pokelearnos run build
 pnpm --filter @workspace/api-server run build
 
-# Deploy to the device (replace 10.0.x.x with the 7306's IP)
-rsync -av --delete \
-  artifacts/api-server/dist/ zulu@10.0.x.x:/opt/pokelearnos/api-dist/
-rsync -av --delete \
-  artifacts/pokelearnos/dist/public/ zulu@10.0.x.x:/opt/pokelearnos/web/
-
-# Restart on the device
-ssh zulu@10.0.x.x \
-  "sudo -u kids XDG_RUNTIME_DIR=/run/user/\$(id -u kids) \
-   systemctl --user restart pokelearnos.service"
+# Update the installed checkout on the device
+ssh zulu@10.0.100.56 \
+  "cd /opt/pokelearnos && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh"
 ```
 
 ---
 
 ## Profiles
 
-Default profiles are seeded automatically on first run via `POST /api/admin/seed`.
+Default profiles are seeded automatically by the backend when the database is empty.
 
 | Name | Age | Pokémon | Daily Limit |
 |------|-----|---------|-------------|

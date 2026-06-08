@@ -17,13 +17,12 @@
 ┌─────────────────────────────────────────────────────────┐
 │              Node.js Express Backend (api-server)         │
 │                                                           │
-│  /api/profiles      GET/POST/PATCH profiles              │
+│  /api/profiles      GET profiles; admin POST/PATCH       │
 │  /api/sessions      POST start/end sessions              │
 │  /api/timer/:id     GET daily time remaining             │
 │  /api/attempts      POST log question attempts           │
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
-│  /api/admin/seed    POST seed default profiles           │
 │  /api/healthz       GET health check                     │
 └─────────────────────────────────────────────────────────┘
                            │ Drizzle ORM
@@ -62,29 +61,32 @@ App
 
 ```
 1. User taps profile card
+   → GET /api/timer/:profileId
    → POST /api/sessions/start {profileId}
-   → SessionContext starts countdown timer (dailyLimitMinutes × 60 seconds)
+   → SessionContext starts countdown from server secondsRemaining
 
 2. While learning
    → User answers questions
    → POST /api/attempts {sessionId, profileId, module, questionId, correct}
-   → Timer counts down every second
+   → Timer counts down locally and refreshes server state every 15 seconds
 
 3. Timer reaches 0
+   → Backend closes any open session and returns isExpired=true
    → isResting = true
    → RestScreen displayed (fullscreen overlay)
-   → Only parent PIN can unlock (extendSession) or end session
+   → Only parent PIN can increase the daily limit or end the day
 
 4. Parent unlocks
    → POST /api/admin/verify-pin {pin}
-   → If valid: extendSession(+15 min) OR endSession()
+   → If valid: authenticated PATCH /api/profiles/:id changes dailyLimitMinutes
    → If end: POST /api/sessions/:id/end, navigate to ProfileSelect
 ```
 
 ## Educational Content
 
 All educational content is **bundled in the frontend** (TypeScript files in `src/content/`).
-No runtime API calls to PokeAPI for content — sprites use static GitHub CDN URLs.
+No runtime API calls to PokeAPI for content or sprites. Pokémon artwork is served
+from files bundled under `artifacts/pokelearnos/public/sprites/`.
 
 ```
 src/content/
@@ -101,8 +103,8 @@ Questions are shuffled per session — children see different orders each time.
 | Threat | Mitigation |
 |--------|-----------|
 | Child exits kiosk | Chromium kiosk mode, no address bar |
-| Child accesses OS | GDM autologin as restricted user |
-| Parent PIN brute force | SHA-256 hash with app salt |
+| Child accesses OS | GDM autologin as restricted `kids` user |
+| Parent PIN brute force | SHA-256 hash with app salt plus rate limiting |
 | Network exposure | Backend binds to 127.0.0.1 in kiosk mode |
 | Content safety | All content is static, curated, bundled |
-| LLM misuse | LLM disabled (LLM_PROVIDER=none) in v1 |
+| LLM misuse | LLM disabled (LLM_PROVIDER=none) by default |

@@ -7,7 +7,7 @@
 | Device | Dell Inspiron 7306 2-in-1 |
 | CPU | Intel Core i7-1165G7 (11th Gen) |
 | Display | 13.3" touchscreen, 3840×2160 native |
-| Required Scaling | 200% (--force-device-scale-factor=2) |
+| Required Scaling | GNOME HiDPI + Chromium `--force-device-scale-factor=0.7` |
 | RAM | 16 GB |
 | Storage | 477 GB NVMe |
 | Wi-Fi | Intel Wi-Fi 6 AX201 |
@@ -22,25 +22,17 @@
 ## Option B: Install Alongside Existing Ubuntu
 
 ```bash
-# 1. Clone repo to /opt/pokelearnos
-sudo git clone <repo> /opt/pokelearnos
-cd /opt/pokelearnos
+# 1. Clone repo anywhere writable by the parent/admin user
+git clone <repo> pokelearnos-v3
+cd pokelearnos-v3
 
-# 2. Install Node.js 20+
-sudo apt-get install -y nodejs npm
+# 2. Run the installer from the repository root
+sudo bash scripts/install.sh
 
-# 3. Install dependencies and build
-pnpm install
-pnpm --filter @workspace/api-server run build
+# 3. Apply kiosk lockdown
+sudo bash system/kiosk-lockdown.sh
 
-# 4. Run lockdown script
-sudo bash system/lockdown.sh
-
-# 5. Configure DATABASE_URL (edit kiosk.service)
-# sudo systemctl edit pokelearnos.service
-# Add: Environment=DATABASE_URL=postgresql://... (or SQLite path)
-
-# 6. Reboot
+# 4. Reboot
 sudo reboot
 ```
 
@@ -57,15 +49,15 @@ xinput list
 xinput set-prop <id> "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1
 ```
 
-## 4K Scaling (200%)
+## 4K Scaling
 
-The kiosk launcher sets `--force-device-scale-factor=2` for Chromium.
-The app uses Nunito font at large sizes and 100px+ touch targets — optimized for this.
+The kiosk launcher sets `--force-device-scale-factor=0.7` for Chromium on top
+of GNOME's HiDPI scaling. Touch targets are sized for the 13.3" 4K panel.
 
 ## Kiosk Security
 
-The `system/lockdown.sh` script:
-- Creates a dedicated `pokelearnos` user (no sudo)
+The installer plus `system/kiosk-lockdown.sh`:
+- Creates a dedicated `kids` user with no shell, no password, and no sudo
 - Configures GDM autologin
 - Disables lock screen, log-out, user switching
 - Disables Bluetooth, CUPS, and Avahi
@@ -77,17 +69,17 @@ The `system/lockdown.sh` script:
 
 **Physical keyboard (emergency):**
 1. Ctrl+Alt+F2 → login as parent user
-2. `sudo systemctl stop pokelearnos.service`
+2. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user stop pokelearnos.service`
 3. Ctrl+Alt+F7 to return to GUI
 
 ## Database (Kiosk Mode)
 
-In kiosk mode the app uses SQLite at `/var/lib/pokelearnos/pokelearnos.db`.
+In kiosk mode the app uses SQLite at `/home/kids/.local/share/pokelearnos/db.sqlite`.
 Progress is stored locally and persists across reboots.
 
 To reset all data:
 ```bash
-sudo rm /var/lib/pokelearnos/pokelearnos.db
-sudo systemctl restart pokelearnos.service
+sudo rm /home/kids/.local/share/pokelearnos/db.sqlite
+sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user restart pokelearnos.service
 # App will re-seed on first startup
 ```

@@ -1,14 +1,15 @@
 import { motion } from "framer-motion";
-import { usePokemonDetail, getOfficialArtworkUrl } from "@/lib/pokeapi";
+import { getOfficialArtworkUrl } from "@/lib/pokeapi";
 import { TypeBadge } from "./TypeBadge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { pokedex } from "@/content/pokedex";
+import { onSpriteError } from "@/lib/sprites";
 
 export function PokemonCard({ name, url, onClick }: { name: string, url: string, onClick?: (id: number) => void }) {
-  // Extract ID from url (e.g. https://pokeapi.co/api/v2/pokemon/1/)
+  // Extract ID from a PokéAPI-style URL or any local route ending in /:id/.
   const idMatch = url.match(/\/(\d+)\/?$/);
   const id = idMatch ? parseInt(idMatch[1], 10) : 1;
   
-  const { data: details, isLoading } = usePokemonDetail(id);
+  const details = pokedex.find((entry) => entry.id === id);
 
   return (
     <motion.div
@@ -25,6 +26,7 @@ export function PokemonCard({ name, url, onClick }: { name: string, url: string,
       <div className="relative w-full aspect-square bg-gray-50 rounded-2xl mb-4 overflow-hidden flex items-center justify-center">
         <img 
           src={getOfficialArtworkUrl(id)} 
+          onError={onSpriteError}
           alt={name}
           className="w-3/4 h-3/4 object-contain drop-shadow-xl"
           loading="lazy"
@@ -32,13 +34,9 @@ export function PokemonCard({ name, url, onClick }: { name: string, url: string,
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {isLoading ? (
-          <Skeleton className="h-6 w-16 rounded-full" />
-        ) : (
-          details?.types.map((t: any) => (
-            <TypeBadge key={t.type.name} type={t.type.name} />
-          ))
-        )}
+        {details?.types.map((type) => (
+          <TypeBadge key={type} type={type.toLowerCase()} />
+        ))}
       </div>
     </motion.div>
   );
