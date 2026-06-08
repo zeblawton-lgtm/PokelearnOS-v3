@@ -85,13 +85,31 @@ rsync -a --delete \
 rsync -a "${REPO_DIR}/system/" "${INSTALL_DIR}/system/" && ok "system/ synced."
 rsync -a "${REPO_DIR}/scripts/" "${INSTALL_DIR}/scripts/" && ok "scripts/ synced."
 
-cp "${REPO_DIR}/package.json" "${INSTALL_DIR}/package.json"
+# Minimal runtime package.json — the backend bundle externalizes only
+# native modules (better-sqlite3). npm cannot parse pnpm's workspace:/catalog:
+# protocols, so we must NOT copy the api-server package.json here.
+BS3_VERSION="$(node -p "require('${REPO_DIR}/node_modules/better-sqlite3/package.json').version")"
+cat > "${INSTALL_DIR}/package.json" << PKGEOF
+{
+  "name": "pokelearnos-runtime",
+  "private": true,
+  "dependencies": {
+    "better-sqlite3": "${BS3_VERSION}"
+  }
+}
+PKGEOF
 
-# Refresh production node_modules for the backend
-cp "${REPO_DIR}/artifacts/api-server/package.json" "${INSTALL_DIR}/"
-cd "${INSTALL_DIR}"
-npm install --production --prefer-offline && ok "Production node_modules updated." || \
-  warn "npm install failed — run manually in ${INSTALL_DIR}."
+# Refresh runtime node_modules only when the required version changed
+INSTALLED_BS3="$(node -p "try{require('${INSTALL_DIR}/node_modules/better-sqlite3/package.json').version}catch{''}" 2>/dev/null)"
+if [[ "${INSTALLED_BS3}" == "${BS3_VERSION}" ]]; then
+  ok "Runtime node_modules up to date (better-sqlite3 ${BS3_VERSION})."
+else
+  cd "${INSTALL_DIR}"
+  rm -rf "${INSTALL_DIR}/node_modules" "${INSTALL_DIR}/package-lock.json"
+  npm install --omit=dev --no-audit --no-fund && \
+    ok "Runtime node_modules updated (better-sqlite3 ${BS3_VERSION})." || \
+    die "npm install failed in ${INSTALL_DIR} — backend cannot start without better-sqlite3."
+fi
 
 # Permissions (same as install.sh; .env is untouched)
 chown -R root:root "${INSTALL_DIR}"

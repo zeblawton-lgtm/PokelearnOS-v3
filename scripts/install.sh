@@ -250,8 +250,19 @@ if confirm "Deploy to ${INSTALL_DIR}/?" "y"; then
   rsync -a "${REPO_DIR}/system/" "${INSTALL_DIR}/system/" && ok "system/ synced."
   rsync -a "${REPO_DIR}/scripts/" "${INSTALL_DIR}/scripts/" && ok "scripts/ synced."
 
-  # Root package.json (for node_modules reference)
-  cp "${REPO_DIR}/package.json" "${INSTALL_DIR}/package.json"
+  # Minimal runtime package.json — the backend bundle externalizes only
+  # native modules (better-sqlite3). npm cannot parse pnpm's workspace:/catalog:
+  # protocols, so we must NOT copy the api-server package.json here.
+  BS3_VERSION="$(node -p "require('${REPO_DIR}/node_modules/better-sqlite3/package.json').version")"
+  cat > "${INSTALL_DIR}/package.json" << PKGEOF
+{
+  "name": "pokelearnos-runtime",
+  "private": true,
+  "dependencies": {
+    "better-sqlite3": "${BS3_VERSION}"
+  }
+}
+PKGEOF
 
   # .env — only if present in repo root
   if [[ -f "${REPO_DIR}/.env" ]]; then
@@ -264,12 +275,17 @@ if confirm "Deploy to ${INSTALL_DIR}/?" "y"; then
     info "Create ${INSTALL_DIR}/.env from .env.example for LLM/production settings."
   fi
 
-  # Install production node_modules for the backend
-  info "Installing production Node.js dependencies for api-server ..."
+  # Install production node_modules for the backend (better-sqlite3 only)
+  info "Installing runtime Node.js dependencies (better-sqlite3 ${BS3_VERSION}) ..."
   cd "${INSTALL_DIR}"
-  cp "${REPO_DIR}/artifacts/api-server/package.json" "${INSTALL_DIR}/"
-  npm install --production --prefer-offline 2>/dev/null || \
-    node --version && ok "Production node_modules installed." || warn "npm install failed — run manually."
+  rm -rf "${INSTALL_DIR}/node_modules" "${INSTALL_DIR}/package-lock.json"
+  if npm install --omit=dev --no-audit --no-fund; then
+    [[ -d "${INSTALL_DIR}/node_modules/better-sqlite3" ]] && \
+      ok "Runtime node_modules installed." || \
+      die "npm install ran but better-sqlite3 is missing in ${INSTALL_DIR}/node_modules."
+  else
+    die "npm install failed in ${INSTALL_DIR} — backend cannot start without better-sqlite3."
+  fi
 
   # Permissions: root owns everything; world-readable for kids user
   chown -R root:root "${INSTALL_DIR}"
