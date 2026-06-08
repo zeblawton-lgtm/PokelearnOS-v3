@@ -232,6 +232,12 @@ echo ""
 if confirm "Build the application now?" "y"; then
   cd "${REPO_DIR}"
 
+  # Fetch the full Pokédex sprite set (1..1025) into public/ before the build.
+  # Idempotent and offline-tolerant; ~250 MB on first run.
+  info "Fetching Pokédex sprites (1..1025) — slow on first run ..."
+  python3 "${REPO_DIR}/scripts/cache-assets.py" all || \
+    warn "Some sprites could not be fetched — those Pokémon show the Poké Ball icon."
+
   pnpm install --frozen-lockfile || pnpm install
   ok "pnpm install complete."
 

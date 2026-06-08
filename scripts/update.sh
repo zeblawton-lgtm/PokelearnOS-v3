@@ -66,6 +66,12 @@ fi
 step "Building application"
 cd "${REPO_DIR}"
 
+# Fetch the full Pokédex sprite set (1..1025) into public/ before the build so
+# Vite bundles them into web/. Idempotent (skips existing) and offline-tolerant.
+step "Fetching Pokédex sprites (this is slow on first run — ~1025 images)"
+python3 "${REPO_DIR}/scripts/cache-assets.py" all || \
+  warn "Some sprites could not be fetched — those Pokémon show the Poké Ball icon."
+
 pnpm install --frozen-lockfile || pnpm install
 ok "pnpm install complete."
 

@@ -61,3 +61,9 @@ Thumbs.db
 
 # stray bundle
 *.bundle
+
+# Full-Pokédex sprites (1025 PNGs, ~250 MB) are fetched on-device at deploy
+# time by scripts/cache-assets.py, NOT committed — too large for git. The
+# curated learning-content sprites committed earlier stay tracked (already in
+# the index; this pattern only blocks the bulk on-device downloads).
+/artifacts/pokelearnos/public/sprites/official-artwork/*.png

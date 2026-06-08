@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Search } from "lucide-react";
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { pokedex, TYPE_COLORS, type PokedexEntry } from "@/content/pokedex";
 import { playTap, speak } from "@/lib/sound";
@@ -10,6 +10,7 @@ import { markPokemonLearned } from "@/lib/storage";
 export default function PokedexPage() {
   const [, navigate] = useLocation();
   const [active, setActive] = useState<PokedexEntry | null>(null);
+  const [query, setQuery] = useState("");
 
   const open = (p: PokedexEntry) => {
     playTap();
@@ -18,36 +19,66 @@ export default function PokedexPage() {
     setActive(p);
   };
 
+  // Filter by name, number, or type. 1025 entries, so match is cheap but we
+  // memoize to avoid re-filtering on unrelated re-renders.
+  const results = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return pokedex;
+    return pokedex.filter((p) =>
+      p.name.toLowerCase().includes(term) ||
+      String(p.id) === term ||
+      p.types.some((t) => t.toLowerCase() === term)
+    );
+  }, [query]);
+
   return (
     <div className="flex flex-col h-full px-4 py-4">
-      <div className="flex items-center gap-4 mb-4">
-        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Back">
+      <div className="flex items-center gap-4 mb-3">
+        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center flex-shrink-0" aria-label="Back">
           <ArrowLeft size={28} />
         </button>
         <h1 className="text-3xl font-black text-pokemon-red">Pokédex</h1>
+        <span className="ml-auto text-base font-bold text-gray-400">{results.length} of {pokedex.length}</span>
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, number, or type…"
+          className="w-full bg-white border-4 border-gray-200 rounded-3xl py-4 pl-12 pr-12 text-xl font-bold text-gray-800 focus:border-pokemon-blue outline-none"
+        />
+        {query && (
+          <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center" aria-label="Clear">
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto pb-6">
-        {pokedex.map((p, i) => (
-          <motion.button
+        {results.map((p) => (
+          <button
             key={p.id}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: Math.min(i * 0.02, 0.3) }}
-            whileTap={{ scale: 0.94 }}
             onClick={() => open(p)}
-            className="bg-white rounded-3xl shadow border-4 border-gray-100 p-3 flex flex-col items-center gap-1 min-h-[140px]"
+            className="bg-white rounded-3xl shadow border-4 border-gray-100 p-3 flex flex-col items-center gap-1 min-h-[140px] active:scale-95 transition-transform"
           >
             <img
               src={ARTWORK(p.id)}
               onError={onSpriteError}
               alt={p.name}
+              loading="lazy"
               className="w-40 h-40 object-contain drop-shadow"
             />
-            <span className="text-lg font-black text-gray-800">{p.name}</span>
+            <span className="text-lg font-black text-gray-800 text-center leading-tight">{p.name}</span>
             <span className="text-xs font-bold text-gray-400">#{p.id}</span>
-          </motion.button>
+          </button>
         ))}
+        {results.length === 0 && (
+          <p className="col-span-full text-center text-xl font-bold text-gray-400 py-10">
+            No Pokémon found. Try another name or number!
+          </p>
+        )}
       </div>
 
       <AnimatePresence>
