@@ -60,7 +60,15 @@ if (isKiosk) {
     // SPA catch-all: any path that doesn't match an API route or static file
     // returns index.html so React Router can handle client-side navigation.
     // Express 5 (path-to-regexp v8) syntax — "*" alone is no longer valid.
-    app.get("/{*splat}", (_req, res) => {
+    app.get("/{*splat}", (req, res) => {
+      // Asset-like paths (anything with a file extension) must 404 — serving
+      // index.html as a 200 here gets cached by the service worker under the
+      // asset URL, permanently breaking that image/script even after the
+      // file is added.
+      if (path.extname(req.path)) {
+        res.status(404).end();
+        return;
+      }
       res.sendFile(path.join(webDir, "index.html"));
     });
     logger.info({ webDir }, "Serving static frontend from disk");

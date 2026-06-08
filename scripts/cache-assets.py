@@ -25,9 +25,9 @@ CDN = ("https://raw.githubusercontent.com/PokeAPI/sprites/master/"
        "sprites/pokemon/other/official-artwork/{id}.png")
 
 # Curated set: app content + Pokédex screen + avatars.
-DEFAULT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 25, 26, 39, 40, 52, 53, 54, 55, 87,
-               94, 129, 130, 131, 133, 143, 147, 148, 149, 150, 151, 175,
-               196, 197, 448]
+DEFAULT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 25, 26, 35, 37, 39, 40, 52, 53, 54,
+               55, 58, 60, 79, 87, 92, 94, 113, 129, 130, 131, 133, 143, 147,
+               148, 149, 150, 151, 172, 175, 196, 197, 448]
 
 
 def main(argv):

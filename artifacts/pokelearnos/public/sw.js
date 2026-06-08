@@ -8,7 +8,9 @@
 // The kiosk has no internet during gameplay, so once assets are cached the app
 // is entirely self-contained.
 
-const CACHE = "pokelearnos-v1";
+// v2: purge caches poisoned by the old SPA catch-all (index.html cached
+// under missing-asset URLs). The activate handler deletes non-matching caches.
+const CACHE = "pokelearnos-v2";
 const SCOPE = new URL(self.registration.scope);
 const SHELL = [SCOPE.pathname, SCOPE.pathname + "manifest.webmanifest", SCOPE.pathname + "sprites/fallback.svg"];
 
