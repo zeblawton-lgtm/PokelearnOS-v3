@@ -37,11 +37,17 @@ export default function GeographyPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [wrong, setWrong] = useState(false);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
   // the correct answer in a predictable slot.
   const choices = useMemo(() => shuffle(q.choices), [q]);
+
+  const advance = useCallback(() => {
+    if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
+    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+  }, [idx, questions.length]);
 
   const handleAnswer = useCallback(async (choice: string) => {
     if (selected !== null) return;
@@ -51,11 +57,10 @@ export default function GeographyPage() {
     if (correct) setScore(s => s + 1);
     await logAttempt("geography", q.id, correct);
     setShowHint(false);
-    setTimeout(() => {
-      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-      else { setIdx(i => i + 1); setSelected(null); }
-    }, 1200);
-  }, [selected, q, idx, questions.length, logAttempt]);
+    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
+    if (correct) setTimeout(advance, 1200);
+    else setWrong(true);
+  }, [selected, q, logAttempt, advance]);
 
   if (done) {
     return (
@@ -138,7 +143,25 @@ export default function GeographyPage() {
             })}
           </div>
 
-          {!showHint && q.hint && selected === null && (
+          {wrong && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+            >
+              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
+              <p className="text-2xl font-black text-gray-800 mb-1">The answer is {q.answer}.</p>
+              {q.hint && <p className="text-xl font-bold text-green-600 mb-4">{q.hint}</p>}
+              <button
+                onClick={advance}
+                className="bg-green-500 text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
+              >
+                Next →
+              </button>
+            </motion.div>
+          )}
+
+          {!wrong && !showHint && q.hint && selected === null && (
             <button onClick={() => setShowHint(true)} className="mt-4 text-lg font-bold text-green-600 underline">
               Need a hint?
             </button>

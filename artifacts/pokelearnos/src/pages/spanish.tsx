@@ -35,11 +35,17 @@ export default function SpanishPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [wrong, setWrong] = useState(false);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
   // the correct answer in a predictable slot.
   const choices = useMemo(() => shuffle(q.choices), [q]);
+
+  const advance = useCallback(() => {
+    if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
+    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+  }, [idx, questions.length]);
 
   const handleAnswer = useCallback(async (choice: string) => {
     if (selected !== null) return;
@@ -49,11 +55,10 @@ export default function SpanishPage() {
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);
-    setTimeout(() => {
-      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-      else { setIdx(i => i + 1); setSelected(null); }
-    }, 1200);
-  }, [selected, q, idx, questions.length, logAttempt]);
+    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
+    if (correct) setTimeout(advance, 1200);
+    else setWrong(true);
+  }, [selected, q, logAttempt, advance]);
 
   if (done) {
     return (
@@ -103,8 +108,17 @@ export default function SpanishPage() {
             {q.spanishWord && (
               <div className="text-5xl font-black text-pokemon-blue mb-2">{q.spanishWord.toUpperCase()}</div>
             )}
-            {q.pokemonId && (
-              <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
+            {/* For color questions, show a color swatch — NOT the answer
+                Pokémon's sprite, which would give the answer away. Other
+                question types still show their illustrative Pokémon. */}
+            {q.type === "color" ? (
+              <div
+                className={`${COLOR_CLASSES[q.spanishWord ?? ""] ?? "bg-gray-300"} w-44 h-44 mx-auto mb-2 rounded-full shadow-inner border-8 border-white`}
+              />
+            ) : (
+              q.pokemonId && (
+                <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
+              )
             )}
             <p className="text-2xl font-bold text-gray-800">{q.question}</p>
             {showHint && q.hint && (
@@ -156,7 +170,25 @@ export default function SpanishPage() {
             </div>
           )}
 
-          {!showHint && q.hint && selected === null && (
+          {wrong && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+            >
+              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
+              <p className="text-2xl font-black text-gray-800 mb-1">The answer is {q.answer}.</p>
+              {q.hint && <p className="text-xl font-bold text-pokemon-blue mb-4">{q.hint}</p>}
+              <button
+                onClick={advance}
+                className="bg-pokemon-blue text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
+              >
+                Next →
+              </button>
+            </motion.div>
+          )}
+
+          {!wrong && !showHint && q.hint && selected === null && (
             <button
               onClick={() => setShowHint(true)}
               className="mt-4 text-lg font-bold text-pokemon-blue underline"

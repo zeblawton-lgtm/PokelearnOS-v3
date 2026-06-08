@@ -195,6 +195,17 @@ function QuestionVisual({
   return <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
 }
 
+// Shown under a wrong answer so the child learns why, not just that.
+function getExplanation(q: AnyQuestion): string {
+  const q3 = q as Math3YoQuestion;
+  const q5 = q as Math5YoQuestion;
+  if (q3.type === "count") return `Count them one by one — there are ${q.answer}.`;
+  if (q3.type === "add" || q5.type === "add") return `${q.a} + ${q.b} = ${q.answer}`;
+  if (q3.type === "subtract" || q5.type === "subtract") return `${q.a} − ${q.b} = ${q.answer}`;
+  if (q5.type === "multiply") return `${q5.a} × ${q5.b} = ${q.answer}`;
+  return `The answer is ${q.answer}.`;
+}
+
 function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
   const q3 = q as Math3YoQuestion;
   const q5 = q as Math5YoQuestion;
@@ -232,6 +243,7 @@ export default function MathPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [wrong, setWrong] = useState(false);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
@@ -241,6 +253,11 @@ export default function MathPage() {
   const displayId = isWordProblem ? q.pokemonId : gamePokemon.id;
   const displayName = isWordProblem ? q.pokemonName : gamePokemon.name;
 
+  const advance = useCallback(() => {
+    if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
+    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+  }, [idx, questions.length]);
+
   const handleAnswer = useCallback(async (choice: number) => {
     if (selected !== null) return;
     setSelected(choice);
@@ -249,11 +266,10 @@ export default function MathPage() {
     if (correct) { setScore(s => s + 1); if (!is3yo) setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);
-    setTimeout(() => {
-      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-      else { setIdx(i => i + 1); setSelected(null); }
-    }, 1100);
-  }, [selected, q, idx, questions.length, logAttempt]);
+    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
+    if (correct) setTimeout(advance, 1100);
+    else setWrong(true);
+  }, [selected, q, is3yo, logAttempt, advance]);
 
   // ─── Done screen ────────────────────────────────────────────────────────────
   if (done) {
@@ -363,7 +379,24 @@ export default function MathPage() {
             })}
           </div>
 
-          {!is3yo && streak >= 3 && (
+          {wrong && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+            >
+              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
+              <p className="text-3xl font-black text-gray-800 mb-4">{getExplanation(q)}</p>
+              <button
+                onClick={advance}
+                className="bg-pokemon-red text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
+              >
+                Next →
+              </button>
+            </motion.div>
+          )}
+
+          {!wrong && !is3yo && streak >= 3 && (
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

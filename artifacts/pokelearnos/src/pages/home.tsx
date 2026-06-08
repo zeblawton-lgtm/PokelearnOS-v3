@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useSession } from "@/context/SessionContext";
-import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map } from "lucide-react";
+import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map, Users } from "lucide-react";
 
 const modules = [
   { id: "math", label: "Math", sublabel: "Count, Add, Subtract", icon: BookOpen, color: "bg-pokemon-red", path: "/math" },
@@ -10,14 +10,25 @@ const modules = [
 ];
 
 export default function Home() {
-  const { profile, secondsRemaining } = useSession();
+  const { profile, secondsRemaining, endSession } = useSession();
   const [, navigate] = useLocation();
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
 
+  // Ending the session drops profile to null, so the app returns to the
+  // profile picker — that's where Leo/Michael switch who's playing.
+  const handleSwitchPlayer = () => { void endSession(); };
+
   return (
     <div className="flex flex-col h-full px-6 py-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+        <button
+          onClick={handleSwitchPlayer}
+          className="absolute top-20 right-5 inline-flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-2 shadow-sm"
+        >
+          <Users size={22} className="text-pokemon-blue" />
+          <span className="text-base font-black text-gray-700">Switch Player</span>
+        </button>
         <h1 className="text-4xl font-black text-pokemon-red">Hi, {profile?.name}!</h1>
         <p className="text-xl text-gray-600 mt-1 font-bold">What do you want to learn today?</p>
         <div className="inline-flex items-center gap-2 bg-pokemon-yellow/20 rounded-2xl px-5 py-2 mt-3">
