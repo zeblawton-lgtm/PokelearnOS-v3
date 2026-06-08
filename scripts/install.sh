@@ -185,6 +185,11 @@ if confirm "Install system packages?" "y"; then
     ok "pnpm $(pnpm --version) already installed."
   else
     npm install -g pnpm && ok "pnpm installed." || warn "pnpm install failed."
+    # npm -g installs into the fnm node dir — symlink pnpm onto PATH like node/npm
+    if ! command -v pnpm &>/dev/null && [[ -L /usr/local/bin/node ]]; then
+      ln -sf "$(dirname "$(readlink -f /usr/local/bin/node)")/pnpm" /usr/local/bin/pnpm
+      ok "pnpm symlinked to /usr/local/bin/pnpm ($(pnpm --version))."
+    fi
   fi
 fi
 
