@@ -39,10 +39,10 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function spriteClass(total: number) {
-  if (total <= 5) return "w-28 h-28";
-  if (total <= 10) return "w-20 h-20";
-  if (total <= 15) return "w-16 h-16";
-  return "w-12 h-12";
+  if (total <= 5) return "w-36 h-36";
+  if (total <= 10) return "w-28 h-28";
+  if (total <= 15) return "w-20 h-20";
+  return "w-16 h-16";
 }
 
 // ─── Visual components ───────────────────────────────────────────────────────
@@ -152,7 +152,7 @@ function MultiplyVisual({ a, b, id, name }: { a: number; b: number; id: number; 
               key={col}
               src={SPRITE(id)}
               alt={name}
-              className="w-16 h-16 object-contain"
+              className="w-20 h-20 object-contain"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: (row * b + col) * 0.06, type: "spring", stiffness: 320, damping: 18 }}
@@ -186,7 +186,7 @@ function QuestionVisual({
     return <MultiplyVisual a={q5.a ?? 2} b={q5.b ?? 2} id={pokemonId} name={pokemonName} />;
   }
   // Word problem — large sprite of the named Pokémon
-  return <img src={SPRITE(q.pokemonId)} alt={pokemonName} className="w-44 h-44 object-contain mx-auto drop-shadow-lg" />;
+  return <img src={SPRITE(q.pokemonId)} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
 }
 
 function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
@@ -261,7 +261,7 @@ export default function MathPage() {
           <img
             src={SPRITE(gamePokemon.id)}
             alt={gamePokemon.name}
-            className="w-56 h-56 mx-auto mb-4 drop-shadow-xl"
+            className="w-64 h-64 mx-auto mb-4 drop-shadow-xl"
           />
           <h2 className="text-5xl font-black text-pokemon-red mb-2">Great job!</h2>
           <p className="text-3xl font-bold text-gray-700 mb-6">
@@ -323,7 +323,7 @@ export default function MathPage() {
           className="flex flex-col items-center flex-1"
         >
           <div className="bg-white rounded-3xl shadow-md p-5 w-full mb-5 text-center">
-            <div className="min-h-[260px] flex items-center justify-center mb-4">
+            <div className="min-h-[320px] flex items-center justify-center mb-4">
               <QuestionVisual
                 q={q}
                 pokemonId={displayId}

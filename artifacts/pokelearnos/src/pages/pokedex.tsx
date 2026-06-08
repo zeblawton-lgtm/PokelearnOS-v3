@@ -42,7 +42,7 @@ export default function PokedexPage() {
               src={ARTWORK(p.id)}
               onError={onSpriteError}
               alt={p.name}
-              className="w-32 h-32 object-contain drop-shadow"
+              className="w-40 h-40 object-contain drop-shadow"
             />
             <span className="text-lg font-black text-gray-800">{p.name}</span>
             <span className="text-xs font-bold text-gray-400">#{p.id}</span>
@@ -65,7 +65,7 @@ export default function PokedexPage() {
               <button onClick={() => setActive(null)} className="absolute top-4 right-4 w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center" aria-label="Close">
                 <X size={20} />
               </button>
-              <img src={ARTWORK(active.id)} onError={onSpriteError} alt={active.name} className="w-72 h-72 object-contain mx-auto drop-shadow-xl mb-2" />
+              <img src={ARTWORK(active.id)} onError={onSpriteError} alt={active.name} className="w-80 h-80 object-contain mx-auto drop-shadow-xl mb-2" />
               <h2 className="text-4xl font-black text-gray-800">{active.name}</h2>
               <div className="flex gap-2 justify-center my-3">
                 {active.types.map((t) => (

@@ -59,7 +59,7 @@ export default function SpanishPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-          <img src={SPRITE(133)} alt="Eevee" className="w-56 h-56 mx-auto mb-4 drop-shadow-xl" />
+          <img src={SPRITE(133)} alt="Eevee" className="w-64 h-64 mx-auto mb-4 drop-shadow-xl" />
           <h2 className="text-5xl font-black text-pokemon-blue mb-2">Excelente!</h2>
           <p className="text-3xl font-bold text-gray-700 mb-6">{score} / {questions.length} correct</p>
           <div className="flex gap-1 justify-center mb-8">
@@ -104,7 +104,7 @@ export default function SpanishPage() {
               <div className="text-5xl font-black text-pokemon-blue mb-2">{q.spanishWord.toUpperCase()}</div>
             )}
             {q.pokemonId && (
-              <img src={SPRITE(q.pokemonId)} alt={q.pokemonName} className="w-44 h-44 mx-auto mb-2" />
+              <img src={SPRITE(q.pokemonId)} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
             )}
             <p className="text-2xl font-bold text-gray-800">{q.question}</p>
             {showHint && q.hint && (
@@ -129,7 +129,7 @@ export default function SpanishPage() {
                     onClick={() => handleAnswer(choice)}
                     className={`bg-white rounded-3xl p-3 shadow flex flex-col items-center gap-1 ${ring} transition-all min-h-[120px]`}
                   >
-                    <img src={SPRITE(pokId)} alt={choice} className="w-32 h-32 object-contain" />
+                    <img src={SPRITE(pokId)} alt={choice} className="w-44 h-44 object-contain" />
                     <span className="text-lg font-black text-gray-800">{choice}</span>
                   </motion.button>
                 );

@@ -52,7 +52,7 @@ export default function RegionsPage() {
           >
             <div className="w-24 h-24 bg-white/25 rounded-2xl flex items-center justify-center flex-shrink-0 relative">
               <span className="text-5xl">{h.emoji}</span>
-              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="w-20 h-20 object-contain absolute -bottom-2 -right-2 drop-shadow" />
+              <img src={ARTWORK(h.pokemonId)} onError={onSpriteError} alt={h.pokemonName} className="w-28 h-28 object-contain absolute -bottom-2 -right-2 drop-shadow" />
             </div>
             <div>
               <p className="text-3xl font-black">{h.name}</p>

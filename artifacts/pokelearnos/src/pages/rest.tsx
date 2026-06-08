@@ -1,19 +1,35 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "@/context/SessionContext";
 import { useLocation } from "wouter";
-import { api } from "@/lib/api";
+import { api, type Profile } from "@/lib/api";
 
 const SPRITE = ARTWORK;
 
 export default function RestScreen() {
-  const { profile, extendSession, endSession } = useSession();
+  const { profile, extendSession, endSession, startSession } = useSession();
   const [, navigate] = useLocation();
   const [showPin, setShowPin] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
   const [loading, setLoading] = useState(false);
+  // The other kid's profile — each has their own daily limit, so when one
+  // kid's time is up the other can take their turn right from this screen.
+  const [other, setOther] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    api.getProfiles()
+      .then((ps) => setOther(ps.find((p) => p.id !== profile?.id) ?? null))
+      .catch(() => setOther(null));
+  }, [profile?.id]);
+
+  const handleSwitch = async () => {
+    if (!other) return;
+    await endSession();
+    await startSession(other, other.dailyLimitMinutes);
+    navigate("/home");
+  };
 
   const handleDigit = (d: string) => {
     if (pin.length < 4) setPin(p => p + d);
@@ -56,7 +72,7 @@ export default function RestScreen() {
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
-          <img src={SPRITE(143)} alt="Snorlax" className="w-64 h-64 drop-shadow-2xl mb-6" />
+          <img src={SPRITE(143)} alt="Snorlax" className="w-72 h-72 drop-shadow-2xl mb-6" />
         </motion.div>
 
         <h1 className="text-5xl font-black text-white mb-3">Rest Time!</h1>
@@ -68,7 +84,21 @@ export default function RestScreen() {
         </p>
 
         {!showPin ? (
-          <div className="flex flex-col gap-4 w-full max-w-xs">
+          <div className="flex flex-col gap-4 w-full max-w-sm">
+            {other && (
+              <button
+                onClick={handleSwitch}
+                className="bg-pokemon-yellow text-gray-900 text-2xl font-black py-4 rounded-3xl min-h-[96px] flex items-center justify-center gap-4 shadow-xl"
+              >
+                <img
+                  src={SPRITE(other.avatarPokemonId)}
+                  onError={onSpriteError}
+                  alt={other.name}
+                  className="w-20 h-20 object-contain drop-shadow"
+                />
+                {other.name}&rsquo;s Turn!
+              </button>
+            )}
             <button
               onClick={() => setShowPin(true)}
               className="bg-white/20 text-white text-xl font-black py-5 rounded-3xl border-2 border-white/30 min-h-[72px]"

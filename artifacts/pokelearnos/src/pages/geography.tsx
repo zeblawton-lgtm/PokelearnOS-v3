@@ -109,7 +109,7 @@ export default function GeographyPage() {
               {typeLabel}
             </span>
             {q.pokemonId && (
-              <img src={SPRITE(q.pokemonId)} alt={q.pokemonName} className="w-44 h-44 mx-auto mb-2" />
+              <img src={SPRITE(q.pokemonId)} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
             )}
             <p className="text-2xl font-bold text-gray-800 leading-snug">{q.question}</p>
             {showHint && q.hint && (
