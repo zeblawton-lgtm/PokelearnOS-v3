@@ -92,10 +92,13 @@ content and the kiosk service is running it (verified live: `/api/profiles`
 returns avatars 882/145; deployed bundle contains the post-`92b4e5c` UI).
 
 They do **not** yet have the ADR-004 (timer purge) or ADR-005 (TTS narration +
-menu-only music) commits. To redeploy (interactive sudo password required):
+menu-only music) commits. Note: on 2026-06-09 the .47 checkout was renamed
+from `/home/parent/PokelearnOS-v3` to `/home/parent/PokelearnOS-v3-repair` so
+**both laptops now use the same path**. To redeploy (interactive sudo password
+required — run in a real terminal, not via Claude Code's `!` shell):
 
 ```bash
-ssh -t parent@10.0.100.47 'cd /home/parent/PokelearnOS-v3 && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
+ssh -t parent@10.0.100.47 'cd /home/parent/PokelearnOS-v3-repair && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
 
 ssh -t parent@10.0.100.62 'cd /home/parent/PokelearnOS-v3-repair && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
 ```
@@ -103,7 +106,7 @@ ssh -t parent@10.0.100.62 'cd /home/parent/PokelearnOS-v3-repair && sudo POKELEA
 Check what a laptop is actually running (read-only, no sudo):
 
 ```bash
-ssh parent@10.0.100.47 'git -C /home/parent/PokelearnOS-v3 log --oneline -1; ls -l /opt/pokelearnos/api-dist/index.mjs; curl -s http://127.0.0.1:8765/api/profiles'
+ssh parent@10.0.100.47 'git -C /home/parent/PokelearnOS-v3-repair log --oneline -1; ls -l /opt/pokelearnos/api-dist/index.mjs; curl -s http://127.0.0.1:8765/api/profiles'
 ssh parent@10.0.100.62 'git -C /home/parent/PokelearnOS-v3-repair log --oneline -1; ls -l /opt/pokelearnos/api-dist/index.mjs; curl -s http://127.0.0.1:8765/api/profiles'
 ```
 
@@ -114,7 +117,7 @@ flowchart TD
   A[Mac Studio local repo] --> B[GitHub origin]
   B --> C[repair/kiosk-release branch]
 
-  C --> D1[10.0.100.47 parent checkout<br>/home/parent/PokelearnOS-v3]
+  C --> D1[10.0.100.47 parent checkout<br>/home/parent/PokelearnOS-v3-repair]
   C --> D2[10.0.100.62 parent checkout<br>/home/parent/PokelearnOS-v3-repair]
 
   D1 --> E1[sudo scripts/update.sh]
