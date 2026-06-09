@@ -68,11 +68,12 @@ Note: the local branch has no upstream tracking configured, so
    - Startup migration in `api-server/src/index.ts` moves old defaults
      (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
      laptops' live DBs.
-   - **Known gap:** profile-select/progress render avatars via `SPRITE()` →
-     `sprites/pokemon/{id}.png`, a path nothing populates — those screens show
-     the Poké Ball fallback. The bundled `official-artwork/145.png`/`882.png`
-     render on the Pokédex/regions pages. Fix: point avatar rendering at
-     `ARTWORK()` or populate `sprites/pokemon/`.
+   - Avatars render correctly: profile-select.tsx and progress.tsx alias
+     `const SPRITE = ARTWORK`, so they load the bundled
+     `official-artwork/145.png`/`882.png`. (An earlier review note claimed
+     they 404'd to the Poké Ball fallback — that was wrong; the lib-level
+     `SPRITE()` helper and its `sprites/pokemon/` path are simply unused by
+     the avatar screens.)
 
 5. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
    Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
@@ -185,5 +186,3 @@ git diff --check
    `repair/kiosk-release`.
 2. **`repair/kiosk-release` has never been merged to `main`** — the deployed
    kiosk code lives only on the side branch.
-3. **Avatar artwork gap** (see What Changed #4): profile screens show the
-   Poké Ball fallback instead of the new Dracovish/Zapdos art.
