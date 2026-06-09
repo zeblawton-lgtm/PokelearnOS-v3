@@ -370,8 +370,8 @@ fi
 step "7/11: Seed default profiles (Leo, Michael)"
 
 info "Profiles are seeded automatically when the kiosk backend starts."
-info "  Leo:     age 3, Jigglypuff avatar, 15 min/day"
-info "  Michael: age 5, Pikachu avatar, 20 min/day"
+info "  Leo:     age 3, Zapdos avatar, no limit"
+info "  Michael: age 5, Dracovish avatar, no limit"
 ok "Profile seeding configured (auto-seeds on first run)."
 
 # ---------------------------------------------------------------------------
@@ -458,8 +458,8 @@ echo "    3. Verify autologin works and the kiosk launches"
 echo "    4. Change the parent PIN from 1234 via the admin overlay (5s corner hold)"
 echo ""
 echo "  Default profiles (auto-seeded on first run):"
-echo "    Michael — age 5 — Pikachu  — 20 min/day"
-echo "    Leo     — age 3 — Jigglypuff — 15 min/day"
+echo "    Michael — age 5 — Dracovish — no limit"
+echo "    Leo     — age 3 — Zapdos    — no limit"
 echo ""
 echo "  Logs:  journalctl _UID=$(id -u "${KIDS_USER}") -f"
 echo ""

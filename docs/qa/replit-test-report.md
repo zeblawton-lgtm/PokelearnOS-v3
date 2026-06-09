@@ -10,7 +10,7 @@
 | Check | Status | Notes |
 |-------|--------|-------|
 | Replit workflow starts app | PASS | `artifacts/pokelearnos: web` running on port 25708 |
-| Preview loads frontend | PASS | Profile selector renders with Pikachu/Jigglypuff avatars |
+| Preview loads frontend | PASS | Profile selector renders with Dracovish/Zapdos avatars |
 | Backend health endpoint | PASS | `GET /api/healthz` → `{"status":"ok"}` |
 | PostgreSQL initializes | PASS | `pnpm --filter @workspace/db run push` succeeded |
 | Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded automatically on fresh database startup |

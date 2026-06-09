@@ -131,6 +131,13 @@ const OVERRIDES: Record<number, PokemonHabitat> = {
     scene: "grassland",
     note: "Pikachu's electricity is easy to connect with open stormy places.",
   },
+  145: {
+    biome: "Stormy mountain sky",
+    climate: "Windy and stormy",
+    examplePlace: "Mountain cliffs",
+    scene: "mountain",
+    note: "Zapdos is an Electric and Flying type, so it connects with storm clouds over tall mountains.",
+  },
   448: {
     biome: "Mountain meadow",
     climate: "Cool and open",
@@ -144,6 +151,13 @@ const OVERRIDES: Record<number, PokemonHabitat> = {
     examplePlace: "Cave",
     scene: "cave",
     note: "Mimikyu fits quiet, dark places where it can hide.",
+  },
+  882: {
+    biome: "Rocky ocean shore",
+    climate: "Wet and windy",
+    examplePlace: "Ocean shore",
+    scene: "ocean",
+    note: "Dracovish is a Water and Dragon type, so it connects with ancient seas and rocky shores.",
   },
 };
 

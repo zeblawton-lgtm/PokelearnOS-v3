@@ -11,26 +11,26 @@ async function seedIfEmpty(): Promise<void> {
   const existing = await db.select().from(profilesTable);
   if (existing.length === 0) {
     await db.insert(profilesTable).values([
-      { name: "Michael", age: 5, avatarPokemonId: 448, dailyLimitMinutes: 20 },
-      { name: "Leo", age: 3, avatarPokemonId: 778, dailyLimitMinutes: 15 },
+      { name: "Michael", age: 5, avatarPokemonId: 882, dailyLimitMinutes: 20 },
+      { name: "Leo", age: 3, avatarPokemonId: 145, dailyLimitMinutes: 15 },
     ]);
     logger.info("Fresh database — seeded default profiles (Michael, Leo)");
     return;
   }
   // Migrations for already-seeded kiosk databases (avatar changes).
   const leo = existing.find((p) => p.name === "Leo");
-  if (leo && leo.avatarPokemonId === 39) {
+  if (leo && [39, 778].includes(leo.avatarPokemonId)) {
     await db.update(profilesTable)
-      .set({ avatarPokemonId: 778 })
+      .set({ avatarPokemonId: 145 })
       .where(eq(profilesTable.id, leo.id));
-    logger.info("Migrated Leo's avatar 39 → 778 (Mimikyu)");
+    logger.info({ from: leo.avatarPokemonId, to: 145 }, "Migrated Leo's avatar to Zapdos");
   }
   const michael = existing.find((p) => p.name === "Michael");
-  if (michael && michael.avatarPokemonId === 25) {
+  if (michael && [25, 448].includes(michael.avatarPokemonId)) {
     await db.update(profilesTable)
-      .set({ avatarPokemonId: 448 })
+      .set({ avatarPokemonId: 882 })
       .where(eq(profilesTable.id, michael.id));
-    logger.info("Migrated Michael's avatar 25 → 448 (Lucario)");
+    logger.info({ from: michael.avatarPokemonId, to: 882 }, "Migrated Michael's avatar to Dracovish");
   }
 }
 

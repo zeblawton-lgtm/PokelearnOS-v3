@@ -12,8 +12,8 @@ Tap the card for the child who is learning today:
 
 | Profile | Age | Avatar | Timer |
 |---------|-----|--------|-------|
-| **Michael** | 5 | Pikachu | No limit |
-| **Leo** | 3 | Jigglypuff | No limit |
+| **Michael** | 5 | Dracovish | No limit |
+| **Leo** | 3 | Zapdos | No limit |
 
 ---
 
@@ -117,8 +117,8 @@ Default profiles are seeded automatically by the backend when the database is em
 
 | Name | Age | Pokémon | Timer |
 |------|-----|---------|-------|
-| Michael | 5 | Pikachu (#25) | No limit |
-| Leo | 3 | Jigglypuff (#39) | No limit |
+| Michael | 5 | Dracovish (#882) | No limit |
+| Leo | 3 | Zapdos (#145) | No limit |
 
 ---
 
