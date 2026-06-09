@@ -66,6 +66,9 @@ and already-heard phrases keep playing while the box is offline. Config via env:
 sound mute — and falls back to the offline SpeechSynthesis voice when the proxy
 returns 503, so the app never *requires* the box. This keeps GOAL §7's offline
 rule intact: LAN-only, best-effort, never the internet. Narrated: math
-questions and wrong-answer explanations, Spanish questions + vocabulary (es),
-Pokédex names, habitat blurbs. The music `learn` scene was removed — background
-music plays on menu screens only; module completion keeps the fanfare + jingle.
+questions and wrong-answer explanations (en), Spanish vocabulary in Spanish
+only (parent preference — the English question text is shown, not spoken),
+Pokédex names, habitat blurbs; module audio is prefetched at module start.
+The music `learn` scene was removed — background music plays on menu screens
+only; module completion keeps the fanfare + jingle (explicitly stopped on the
+next scene/module, since the completion tracks are full-length songs).

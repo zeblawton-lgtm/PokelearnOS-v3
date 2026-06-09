@@ -69,12 +69,24 @@ function playNext() {
   if (!muted) void a.play().catch(() => {});
 }
 
+// The completion tracks are full-length songs, not short stings — they must
+// be stopped explicitly whenever the app moves on, or they keep playing
+// under the next screen.
+function stopJingle() {
+  if (jingle) {
+    jingle.pause();
+    jingle.currentTime = 0;
+  }
+  if (bg) bg.volume = volume; // un-duck
+}
+
 // Switch background music to a scene's playlist. Idempotent per scene.
 export function playScene(s: Scene) {
   if (s === scene) {
     if (!muted && bg && bg.paused) void bg.play().catch(() => {});
     return;
   }
+  stopJingle();
   scene = s;
   playlist = shuffle(SCENES[s]);
   idx = 0;
@@ -103,6 +115,7 @@ export function playJingle(name: "results" | "result-display" = "result-display"
 
 export function stop() {
   scene = null;
+  stopJingle();
   if (bg) {
     bg.pause();
     bg.currentTime = 0;
@@ -118,6 +131,7 @@ export function setMusicMuted(value: boolean) {
   }
   if (muted) {
     if (bg) bg.pause();
+    stopJingle();
   } else if (scene) {
     if (bg && bg.paused) void bg.play().catch(() => {});
   }

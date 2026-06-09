@@ -1,7 +1,7 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { speakText, stopSpeaking } from "@/lib/tts";
+import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -322,6 +322,14 @@ export default function MathPage() {
     void speakText(getSpokenQuestion(q, gamePokemon.name, is3yo), "en");
   }, [q, gamePokemon.name, is3yo, done]);
   useEffect(() => () => stopSpeaking(), []);
+
+  // Warm the audio for this session's questions so narration is instant.
+  useEffect(() => {
+    void prefetch(questions.map((qq) => ({
+      text: getSpokenQuestion(qq, gamePokemon.name, is3yo),
+      lang: "en" as const,
+    })));
+  }, [questions, gamePokemon.name, is3yo]);
 
   const advance = useCallback(() => {
     if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }

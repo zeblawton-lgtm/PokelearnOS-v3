@@ -1,7 +1,7 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { speakText, speakSequence, stopSpeaking } from "@/lib/tts";
+import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -43,16 +43,24 @@ export default function SpanishPage() {
   // the correct answer in a predictable slot.
   const choices = useMemo(() => shuffle(q.choices), [q]);
 
-  // Read the question aloud, then the Spanish word in Spanish — same Vivian
-  // voice for both languages (falls back to SpeechSynthesis).
+  // Speak only the Spanish content (the parent found English-then-Spanish
+  // narration confusing) — Vivian pronounces the word, the question stays
+  // on screen as text.
   useEffect(() => {
     if (done) return;
-    void speakSequence([
-      { text: q.question, lang: "en" },
-      ...(q.spanishWord ? [{ text: q.spanishWord, lang: "es" as const }] : []),
-    ]);
+    if (q.spanishWord) void speakText(q.spanishWord, "es");
+    else stopSpeaking();
   }, [q, done]);
   useEffect(() => () => stopSpeaking(), []);
+
+  // Warm the audio for this session's words so pronunciation is instant.
+  useEffect(() => {
+    void prefetch(
+      questions.flatMap((qq) =>
+        qq.spanishWord ? [{ text: qq.spanishWord, lang: "es" as const }] : [],
+      ),
+    );
+  }, [questions]);
 
   const advance = useCallback(() => {
     if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }
@@ -64,7 +72,7 @@ export default function SpanishPage() {
     setSelected(choice);
     const correct = choice === q.answer;
     if (correct) { playCorrect(); if (q.spanishWord) void speakText(q.spanishWord, "es"); else stopSpeaking(); }
-    else { playWrong(); void speakText(`The answer is ${q.answer}.`, "auto"); }
+    else { playWrong(); void speakText(q.answer, "auto"); }
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);

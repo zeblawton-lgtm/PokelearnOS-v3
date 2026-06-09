@@ -35,9 +35,13 @@ Note: the local branch has no upstream tracking configured, so
    - Frontend `src/lib/tts.ts` (speakText/speakSequence/stopSpeaking): object-
      URL cache, respects parent sound mute, SpeechSynthesis fallback on 503.
    - Narrated: math questions + wrong-answer explanations (en), Spanish
-     questions (en) + vocabulary (es), Pokédex names, habitat blurbs.
+     vocabulary in Spanish only (the English question text is shown, not
+     spoken — parent preference), Pokédex names, habitat blurbs. Module
+     question audio is prefetched on module start so narration is instant.
    - Music `learn` scene removed — music on menus only; learning modules are
-     silent; completion keeps fanfare + jingle.
+     silent; completion keeps fanfare + jingle. The completion tracks are
+     full-length songs, so `music.stop()`/`playScene()` explicitly stop the
+     jingle element — without that it kept playing into the next module.
    - Verified live against the real box through the proxy: en + es synthesis,
      1.5 ms cached replay, valid 24 kHz PCM wav.
 

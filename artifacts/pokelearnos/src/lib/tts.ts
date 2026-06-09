@@ -18,6 +18,7 @@ export interface Utterance {
 
 const MAX_CACHE = 150;
 const cache = new Map<string, string>(); // "lang\ntext" -> object URL
+const pending = new Map<string, Promise<string>>(); // in-flight dedup
 
 let el: HTMLAudioElement | null = null;
 let generation = 0;
@@ -31,19 +32,42 @@ async function fetchUtterance(text: string, lang: SpeechLang): Promise<string> {
   const hit = cache.get(key);
   if (hit) return hit;
 
-  const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`);
-  if (!res.ok) throw new Error(`tts request failed (${res.status})`);
-  const url = URL.createObjectURL(await res.blob());
+  let inFlight = pending.get(key);
+  if (!inFlight) {
+    inFlight = (async () => {
+      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`);
+      if (!res.ok) throw new Error(`tts request failed (${res.status})`);
+      const url = URL.createObjectURL(await res.blob());
 
-  if (cache.size >= MAX_CACHE) {
-    const oldest = cache.keys().next().value;
-    if (oldest !== undefined) {
-      URL.revokeObjectURL(cache.get(oldest)!);
-      cache.delete(oldest);
+      if (cache.size >= MAX_CACHE) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) {
+          URL.revokeObjectURL(cache.get(oldest)!);
+          cache.delete(oldest);
+        }
+      }
+      cache.set(key, url);
+      return url;
+    })().finally(() => pending.delete(key));
+    pending.set(key, inFlight);
+  }
+  return inFlight;
+}
+
+// Quietly warm the caches (backend disk wav + frontend object URLs) so
+// narration starts instantly when a question appears. Serial on purpose —
+// the TTS box synthesizes one request at a time. Bails out if the box is
+// unreachable (the speak path will use the SpeechSynthesis fallback anyway).
+export async function prefetch(parts: Utterance[]): Promise<void> {
+  for (const part of parts) {
+    const text = part.text.trim();
+    if (!text) continue;
+    try {
+      await fetchUtterance(text, part.lang);
+    } catch {
+      return;
     }
   }
-  cache.set(key, url);
-  return url;
 }
 
 function playUrl(url: string): Promise<void> {
