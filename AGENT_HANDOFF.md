@@ -1,6 +1,7 @@
 # PokeLearnOS Agent Handoff
 
-Last updated: 2026-06-09 (time-based blocking removed end-to-end; ADR-004)
+Last updated: 2026-06-09 (Vivian TTS narration + menu-only music, ADR-005;
+time-based blocking removed end-to-end, ADR-004)
 
 ## Current Repo State
 
@@ -25,7 +26,22 @@ Note: the local branch has no upstream tracking configured, so
 
 ## What Changed (most recent first)
 
-1. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
+1. **Voice narration + menu-only music (2026-06-09, ADR-005).**
+   - Backend `GET /api/tts?text&lang=en|es|auto` (`routes/tts.ts`) proxies the
+     LAN Qwen3-TTS box (Gradio `run_instruct`; voice **Vivian**) and caches
+     wavs on disk. Env: `TTS_URL` (default `http://10.0.100.137:8000`),
+     `TTS_VOICE`, `TTS_INSTRUCT`, `TTS_CACHE_DIR`. No laptop `.env` changes
+     needed — defaults are in code.
+   - Frontend `src/lib/tts.ts` (speakText/speakSequence/stopSpeaking): object-
+     URL cache, respects parent sound mute, SpeechSynthesis fallback on 503.
+   - Narrated: math questions + wrong-answer explanations (en), Spanish
+     questions (en) + vocabulary (es), Pokédex names, habitat blurbs.
+   - Music `learn` scene removed — music on menus only; learning modules are
+     silent; completion keeps fanfare + jingle.
+   - Verified live against the real box through the proxy: en + es synthesis,
+     1.5 ms cached replay, valid 24 kHz PCM wav.
+
+2. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
    - GOAL.md §1/§6/§9 no longer require daily limits or a rest screen; the
      release gate now requires sessions run without time-based blocking.
    - Backend: `/api/timer/*` and `PATCH /api/profiles/:id` deleted (requests
@@ -41,13 +57,13 @@ Note: the local branch has no upstream tracking configured, so
    - Docs updated: parent guide, architecture, README, `.claude/agents/*`,
      QA report appendix.
 
-2. **Number-only math for Michael** (`d9a1262`).
+3. **Number-only math for Michael** (`d9a1262`).
    - The split is keyed by profile **age** (`age <= 3` gets picture-based
      visuals), not by name — "Michael" appears nowhere in frontend logic.
    - Age > 3: large numeric equations, bigger answer numerals, large-text word
      problems. Age <= 3 (Leo): unchanged picture-based count/add/subtract.
 
-3. **Default avatars changed** (`33d3608`).
+4. **Default avatars changed** (`33d3608`).
    - Michael: Dracovish `#882`; Leo: Zapdos `#145`.
    - Startup migration in `api-server/src/index.ts` moves old defaults
      (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
@@ -58,14 +74,15 @@ Note: the local branch has no upstream tracking configured, so
      render on the Pokédex/regions pages. Fix: point avatar rendering at
      `ARTWORK()` or populate `sprites/pokemon/`.
 
-4. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
+5. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
    Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
    the generic mountain/ocean GeoScenes).
 
-5. **Security/test work** — API tests cover unauthenticated admin/profile
+6. **Security/test work** — API tests cover unauthenticated admin/profile
    writes failing, removed endpoints returning 404, bearer-token validity, PIN
-   rate limiting, CORS. Local gates last verified 2026-06-09: frontend + API
-   typechecks clean, tests **12/12**, `git diff --check` clean.
+   rate limiting, CORS, and the TTS proxy (mock Gradio box: synth, disk cache,
+   validation, 503 fallback). Local gates last verified 2026-06-09: frontend +
+   API typechecks clean, tests **19/19**, `git diff --check` clean.
 
 ## Laptop State
 
@@ -73,8 +90,8 @@ Both laptops were fully deployed at ~08:30 EDT 2026-06-09 with `d9a1262`
 content and the kiosk service is running it (verified live: `/api/profiles`
 returns avatars 882/145; deployed bundle contains the post-`92b4e5c` UI).
 
-They do **not** yet have the ADR-004 purge commit. To redeploy (interactive
-sudo password required):
+They do **not** yet have the ADR-004 (timer purge) or ADR-005 (TTS narration +
+menu-only music) commits. To redeploy (interactive sudo password required):
 
 ```bash
 ssh -t parent@10.0.100.47 'cd /home/parent/PokelearnOS-v3 && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
@@ -168,5 +185,5 @@ git diff --check
    `repair/kiosk-release`.
 2. **`repair/kiosk-release` has never been merged to `main`** — the deployed
    kiosk code lives only on the side branch.
-3. **Avatar artwork gap** (see What Changed #3): profile screens show the
+3. **Avatar artwork gap** (see What Changed #4): profile screens show the
    Poké Ball fallback instead of the new Dracovish/Zapdos art.

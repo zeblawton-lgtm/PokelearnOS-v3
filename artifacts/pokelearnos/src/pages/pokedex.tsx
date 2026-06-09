@@ -4,7 +4,8 @@ import { useLocation } from "wouter";
 import { ArrowLeft, X, Search } from "lucide-react";
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { pokedex, TYPE_COLORS, type PokedexEntry } from "@/content/pokedex";
-import { playTap, speak } from "@/lib/sound";
+import { playTap } from "@/lib/sound";
+import { speakText } from "@/lib/tts";
 import { markPokemonLearned } from "@/lib/storage";
 import { GeoScene } from "@/components/GeoScene";
 import { getPokemonHabitat } from "@/lib/pokemonHabitat";
@@ -16,7 +17,7 @@ export default function PokedexPage() {
 
   const open = (p: PokedexEntry) => {
     playTap();
-    speak(p.name, "en-US");
+    void speakText(p.name, "en");
     markPokemonLearned(p.id);
     setActive(p);
   };
@@ -121,7 +122,7 @@ export default function PokedexPage() {
               )}
               <p className="text-xl font-bold text-gray-600 leading-snug">{active.fact}</p>
               <button
-                onClick={() => speak(active.name, "en-US")}
+                onClick={() => void speakText(active.name, "en")}
                 className="mt-5 bg-pokemon-blue text-white text-xl font-black px-8 py-4 rounded-3xl min-h-[64px]"
               >
                 🔊 Say the name

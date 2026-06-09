@@ -48,3 +48,24 @@ record `minutesUsed` for the Progress page only. `profiles.daily_limit_minutes`
 stays in both schemas (unused) so existing kiosk SQLite databases need no
 destructive migration; orphaned `timer_adjustment:*` rows in `settings` are
 ignored.
+
+## ADR-005 — LAN voice narration (Qwen3-TTS "Vivian") and menu-only music (2026-06-09)
+**Context:** The parent runs a Qwen3-TTS box (`Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice`,
+a Gradio app) on the home LAN at `10.0.100.137:8000` and wants math questions
+and English text read aloud in the friendly "Vivian" voice, the same voice for
+all Spanish speech, and background music limited to menus and module completion.
+
+**Decision:** The backend proxies speech at `GET /api/tts?text&lang=en|es|auto`
+(`routes/tts.ts`): it drives the Gradio `run_instruct` endpoint, downloads the
+wav, and caches it on disk keyed by voice+lang+text (`TTS_CACHE_DIR`, default
+under the OS tmpdir), so the finite question banks converge to zero box traffic
+and already-heard phrases keep playing while the box is offline. Config via env:
+`TTS_URL` (default `http://10.0.100.137:8000`), `TTS_VOICE` (default `Vivian`),
+`TTS_INSTRUCT` (speaking-style prompt). The frontend speaks only through
+`src/lib/tts.ts` — same-origin fetch, object-URL cache, respects the parent
+sound mute — and falls back to the offline SpeechSynthesis voice when the proxy
+returns 503, so the app never *requires* the box. This keeps GOAL §7's offline
+rule intact: LAN-only, best-effort, never the internet. Narrated: math
+questions and wrong-answer explanations, Spanish questions + vocabulary (es),
+Pokédex names, habitat blurbs. The music `learn` scene was removed — background
+music plays on menu screens only; module completion keeps the fanfare + jingle.

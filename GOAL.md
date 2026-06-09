@@ -51,6 +51,9 @@ Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habita
 
 - No internet at runtime. Sprites/audio are bundled and served locally; missing
   sprites fall back to a bundled SVG. PokéAPI is build-time/admin refresh only.
+- Voice narration is best-effort via a LAN Qwen3-TTS box (`TTS_URL`), proxied
+  by the backend with on-disk caching and SpeechSynthesis fallback — the app
+  never requires it (ADR-005).
 
 ## 8. Kiosk Lockdown
 

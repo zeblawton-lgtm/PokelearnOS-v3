@@ -15,12 +15,13 @@ const BASE: string =
   "/";
 const root = BASE.endsWith("/") ? BASE : BASE + "/";
 
-export type Scene = "menu" | "learn";
+// Background music plays only on menu screens; learning modules are silent so
+// voice narration is clear, and module completion plays the jingle (ADR-005).
+export type Scene = "menu";
 
 // Curated mapping of scene -> looping playlist (filenames in public/audio).
 const SCENES: Record<Scene, string[]> = {
   menu: ["main-menu", "mii-channel", "mii-plaza", "wii-play-title"],
-  learn: ["mii-parade", "training-menu", "mii-channel"],
 };
 
 const MUTE_KEY = "pokelearn_music_muted";

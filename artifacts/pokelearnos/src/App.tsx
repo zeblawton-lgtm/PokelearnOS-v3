@@ -27,7 +27,9 @@ function AppRoutes() {
 
   useEffect(() => {
     if (!profile) { music.stop(); return; }
-    if (["/math", "/spanish", "/geography"].includes(location)) music.playScene("learn");
+    // Learning modules are music-free so narration is clear; the completion
+    // jingle still plays over silence when a module finishes.
+    if (["/math", "/spanish", "/geography"].includes(location)) music.stop();
     else music.playScene("menu");
   }, [profile, location]);
 

@@ -1,7 +1,8 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { useState, useCallback, useMemo } from "react";
+import { speakText, stopSpeaking } from "@/lib/tts";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
@@ -256,6 +257,33 @@ function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string 
   }
 }
 
+// Spoken (TTS) version of each question — symbols verbalised for the voice.
+function getSpokenQuestion(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
+  const q3 = q as Math3YoQuestion;
+  const q5 = q as Math5YoQuestion;
+
+  if (is3yo) {
+    if (q3.type === "count") return `How many ${pokemonName} do you see? Count them!`;
+    if (q3.type === "add") return `${q3.a} ${pokemonName} plus ${q3.b} ${pokemonName}. How many altogether?`;
+    return `${q3.a} ${pokemonName}, take away ${q3.b}. How many are left?`;
+  }
+  if (q5.type === "word") return q5.wordProblem ?? "";
+  if (q5.type === "add") return `What is ${q.a} plus ${q.b}?`;
+  if (q5.type === "subtract") return `What is ${q.a} minus ${q.b}?`;
+  return `What is ${q5.a} times ${q5.b}?`;
+}
+
+// Spoken version of the wrong-answer explanation.
+function getSpokenExplanation(q: AnyQuestion): string {
+  const q3 = q as Math3YoQuestion;
+  const q5 = q as Math5YoQuestion;
+  if (q3.type === "count") return `Count them one by one — there are ${q.answer}.`;
+  if (q3.type === "add" || q5.type === "add") return `${q.a} plus ${q.b} equals ${q.answer}.`;
+  if (q3.type === "subtract" || q5.type === "subtract") return `${q.a} minus ${q.b} equals ${q.answer}.`;
+  if (q5.type === "multiply") return `${q5.a} times ${q5.b} equals ${q.answer}.`;
+  return `The answer is ${q.answer}.`;
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function MathPage() {
@@ -288,8 +316,15 @@ export default function MathPage() {
   const displayName = isWordProblem ? q.pokemonName : gamePokemon.name;
   const prompt = getPrompt(q, gamePokemon.name, is3yo);
 
+  // Read each question aloud (Vivian voice; falls back to SpeechSynthesis).
+  useEffect(() => {
+    if (done) return;
+    void speakText(getSpokenQuestion(q, gamePokemon.name, is3yo), "en");
+  }, [q, gamePokemon.name, is3yo, done]);
+  useEffect(() => () => stopSpeaking(), []);
+
   const advance = useCallback(() => {
-    if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
+    if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }
     else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
   }, [idx, questions.length]);
 
@@ -297,7 +332,7 @@ export default function MathPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
-    if (correct) playCorrect(); else playWrong();
+    if (correct) { stopSpeaking(); playCorrect(); } else { playWrong(); void speakText(getSpokenExplanation(q), "en"); }
     if (correct) { setScore(s => s + 1); if (!is3yo) setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);

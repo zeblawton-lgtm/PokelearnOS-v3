@@ -21,6 +21,8 @@
 │  /api/attempts      POST log question attempts           │
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
+│  /api/tts           GET voice proxy → LAN Qwen3-TTS box  │
+│                     (disk-cached wav; 503 → SpeechSynth) │
 │  /api/healthz       GET health check                     │
 └─────────────────────────────────────────────────────────┘
                            │ Drizzle ORM
@@ -62,6 +64,8 @@ App
    → SessionContext starts an unrestricted learning session
 
 2. While learning
+   → Each question is narrated by the Vivian voice (GET /api/tts, cached;
+     SpeechSynthesis fallback) — background music is menu-only (ADR-005)
    → User answers questions
    → POST /api/attempts {sessionId, profileId, module, questionId, correct}
 

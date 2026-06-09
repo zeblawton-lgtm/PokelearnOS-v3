@@ -1,7 +1,8 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
-import { playCorrect, playWrong, playFanfare, speak } from "@/lib/sound";
+import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { useState, useCallback, useMemo } from "react";
+import { speakText, speakSequence, stopSpeaking } from "@/lib/tts";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
@@ -42,8 +43,19 @@ export default function SpanishPage() {
   // the correct answer in a predictable slot.
   const choices = useMemo(() => shuffle(q.choices), [q]);
 
+  // Read the question aloud, then the Spanish word in Spanish — same Vivian
+  // voice for both languages (falls back to SpeechSynthesis).
+  useEffect(() => {
+    if (done) return;
+    void speakSequence([
+      { text: q.question, lang: "en" },
+      ...(q.spanishWord ? [{ text: q.spanishWord, lang: "es" as const }] : []),
+    ]);
+  }, [q, done]);
+  useEffect(() => () => stopSpeaking(), []);
+
   const advance = useCallback(() => {
-    if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
+    if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }
     else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
   }, [idx, questions.length]);
 
@@ -51,7 +63,8 @@ export default function SpanishPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
-    if (correct) { playCorrect(); if (q.spanishWord) speak(q.spanishWord); } else playWrong();
+    if (correct) { playCorrect(); if (q.spanishWord) void speakText(q.spanishWord, "es"); else stopSpeaking(); }
+    else { playWrong(); void speakText(`The answer is ${q.answer}.`, "auto"); }
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);
