@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useSession } from "@/context/SessionContext";
 import { Lock } from "lucide-react";
 
-export function TimerBar() {
+export function TopBar() {
   const { profile, openParentOverlay } = useSession();
   const [, navigate] = useLocation();
 
@@ -20,19 +19,7 @@ export function TimerBar() {
           <span className="text-pokemon-red font-black text-sm">HOME</span>
         </button>
 
-        <div className="flex-1">
-          <div className="w-full bg-gray-100 rounded-full h-3">
-            <motion.div
-              className="h-3 rounded-full bg-pokemon-red transition-colors"
-              animate={{ width: "100%" }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-        </div>
-
-        <span className="text-lg font-black flex-shrink-0 text-gray-700">
-          No limit
-        </span>
+        <div className="flex-1" />
 
         <button
           onClick={openParentOverlay}

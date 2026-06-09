@@ -36,7 +36,7 @@ syntax checks on Linux x64.
 - `GOAL.md` — project spec
 - `AGENTS.md` — stack & coding conventions (canonical)
 - `DECISIONS.md` — architecture decision records
-- `docs/parent-guide.md` — profiles, daily limits, PIN flow
+- `docs/parent-guide.md` — profiles, PIN flow
 - `docs/credits.md` — asset licensing
 
 > ⚠️ Bundled sprites/audio are Nintendo-owned, private-use only. Do not make this repository or its builds public.

@@ -9,7 +9,7 @@
 │  │          React Frontend (pokelearnos)             │  │
 │  │                                                   │  │
 │  │  ProfileSelect → Home Hub → [Math|Spanish|Geo]   │  │
-│  │  TimerBar (top) ─── ParentOverlay (modal)        │  │
+│  │  TopBar (top) ───── ParentOverlay (modal)         │  │
 │  └───────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
                            │ HTTP /api/*
@@ -18,8 +18,6 @@
 │                                                           │
 │  /api/profiles      GET profiles; admin POST/PATCH       │
 │  /api/sessions      POST start/end sessions              │
-│  /api/timer/:id     GET unlimited timer state            │
-│  /api/timer/:id/*   legacy admin timer compatibility     │
 │  /api/attempts      POST log question attempts           │
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
@@ -30,13 +28,13 @@
 │         PostgreSQL (Replit dev) / SQLite (kiosk)         │
 │                                                           │
 │  profiles    id, name, age, avatarPokemonId,             │
-│              dailyLimitMinutes, createdAt                │
+│              dailyLimitMinutes (unused legacy), createdAt │
 │  sessions    id, profileId, startedAt, endedAt,         │
 │              minutesUsed                                  │
 │  attempts    id, sessionId, profileId, module,          │
 │              questionId, correct, answeredAt             │
 │  settings    id, key, value, updatedAt                   │
-│              (parent_pin_hash and legacy timer settings) │
+│              (parent_pin_hash; timer_adjustment rows ignored)    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -44,8 +42,8 @@
 
 ```
 App
-├── SessionProvider (context: profile, session, timer, overlay state)
-│   ├── TimerBar (fixed top bar, no-limit status, parent lock button)
+├── SessionProvider (context: profile, session, overlay state)
+│   ├── TopBar (fixed top bar: home + parent lock buttons)
 │   ├── Routes
 │   │   ├── /          → ProfileSelect (loads profiles from API)
 │   │   ├── /home      → Home Hub (3 module tiles + progress)
@@ -60,20 +58,16 @@ App
 
 ```
 1. User taps profile card
-   → GET /api/timer/:profileId
    → POST /api/sessions/start {profileId}
    → SessionContext starts an unrestricted learning session
 
 2. While learning
    → User answers questions
    → POST /api/attempts {sessionId, profileId, module, questionId, correct}
-   → Timer state refreshes every 15 seconds for compatibility, but does not
-     count down or enforce a limit
 
-3. Time usage exceeds the old configured limit
-   → Backend still records minutes used today
-   → Public timer responses return isUnlimited=true and isExpired=false
-   → Child can keep learning
+3. Session bookkeeping
+   → Backend records minutes used per session (Progress page history only —
+     nothing enforces a limit; there are no timer endpoints)
 
 4. Parent unlocks
    → POST /api/admin/verify-pin {pin}

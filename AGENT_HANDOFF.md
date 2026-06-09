@@ -1,6 +1,6 @@
 # PokeLearnOS Agent Handoff
 
-Last updated: 2026-06-09
+Last updated: 2026-06-09 (time-based blocking removed end-to-end; ADR-004)
 
 ## Current Repo State
 
@@ -10,83 +10,83 @@ Local deploy worktree:
 /Users/zeb/Desktop/Pokelearn/PokelearnOS-v3-repair-work
 ```
 
-Branch:
+Branch: `repair/kiosk-release`, pushed to `origin/repair/kiosk-release`.
 
-```text
-repair/kiosk-release
+Don't trust a hash written in this file — check the live state instead:
+
+```bash
+git log --oneline -3
+gh run list --branch repair/kiosk-release --limit 3
 ```
 
-Remote:
+Note: the local branch has no upstream tracking configured, so
+`git status -sb` shows no ahead/behind info. Push explicitly with
+`git push origin repair/kiosk-release` (CI runs on every push).
 
-```text
-origin/repair/kiosk-release
-```
+## What Changed (most recent first)
 
-Current commit:
+1. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
+   - GOAL.md §1/§6/§9 no longer require daily limits or a rest screen; the
+     release gate now requires sessions run without time-based blocking.
+   - Backend: `/api/timer/*` and `PATCH /api/profiles/:id` deleted (requests
+     return 404 — regression-tested in `tests/security.test.ts`).
+     `lib/timer.ts` replaced by `lib/session-usage.ts` (records per-session
+     minutes for the Progress page only; nothing enforces a limit).
+   - Frontend: `TimerBar` renamed to `TopBar` (home + parent-lock buttons only,
+     no progress bar or "No limit" label); profile cards no longer show a
+     "No limit" badge; timer API methods/types removed from `lib/api.ts`.
+   - DB: `profiles.daily_limit_minutes` retained unused in both schemas — no
+     destructive kiosk migration. Stale `timer_adjustment:*` settings rows are
+     ignored.
+   - Docs updated: parent guide, architecture, README, `.claude/agents/*`,
+     QA report appendix.
 
-```text
-d9a1262 Show number-only math for Michael
-```
+2. **Number-only math for Michael** (`d9a1262`).
+   - The split is keyed by profile **age** (`age <= 3` gets picture-based
+     visuals), not by name — "Michael" appears nowhere in frontend logic.
+   - Age > 3: large numeric equations, bigger answer numerals, large-text word
+     problems. Age <= 3 (Leo): unchanged picture-based count/add/subtract.
 
-GitHub CI passed for the latest pushed branch.
+3. **Default avatars changed** (`33d3608`).
+   - Michael: Dracovish `#882`; Leo: Zapdos `#145`.
+   - Startup migration in `api-server/src/index.ts` moves old defaults
+     (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
+     laptops' live DBs.
+   - **Known gap:** profile-select/progress render avatars via `SPRITE()` →
+     `sprites/pokemon/{id}.png`, a path nothing populates — those screens show
+     the Poké Ball fallback. The bundled `official-artwork/145.png`/`882.png`
+     render on the Pokédex/regions pages. Fix: point avatar rendering at
+     `ARTWORK()` or populate `sprites/pokemon/`.
 
-## What Changed
+4. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
+   Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
+   the generic mountain/ocean GeoScenes).
 
-1. Time restriction was removed from the app flow.
-   - Timer no longer blocks sessions.
-   - UI shows `No limit`.
-   - Parent reset/unlock timer controls are no longer needed for daily limits.
+5. **Security/test work** — API tests cover unauthenticated admin/profile
+   writes failing, removed endpoints returning 404, bearer-token validity, PIN
+   rate limiting, CORS. Local gates last verified 2026-06-09: frontend + API
+   typechecks clean, tests **12/12**, `git diff --check` clean.
 
-2. Default avatars were changed.
-   - Michael: Dracovish `#882`
-   - Leo: Zapdos `#145`
-   - Existing databases migrate old defaults on backend start:
-     - Michael from Pikachu `25` or Lucario `448` to Dracovish `882`
-     - Leo from Jigglypuff `39` or Mimikyu `778` to Zapdos `145`
-   - Offline artwork added:
-     - `artifacts/pokelearnos/public/sprites/official-artwork/145.png`
-     - `artifacts/pokelearnos/public/sprites/official-artwork/882.png`
+## Laptop State
 
-3. Michael's math was changed.
-   - For Michael/age 5 math, Pokemon pictures were removed.
-   - Main math area now shows large numeric equations.
-   - Answer choices use larger numerals.
-   - Word problems show large text instead of Pokemon art.
-   - Leo/age 3 math still uses picture-based counting/add/subtract visuals.
+Both laptops were fully deployed at ~08:30 EDT 2026-06-09 with `d9a1262`
+content and the kiosk service is running it (verified live: `/api/profiles`
+returns avatars 882/145; deployed bundle contains the post-`92b4e5c` UI).
 
-4. Pokedex/habitat support was extended.
-   - Zapdos has a stormy mountain sky habitat.
-   - Dracovish has a rocky ocean shore habitat.
-
-5. Security/test work exists and passed.
-   - API tests cover unauthenticated admin/profile/timer writes failing.
-   - Latest local checks passed:
-     - frontend typecheck
-     - API typecheck
-     - API tests `16/16`
-     - `git diff --check`
-   - GitHub CI passed.
-
-## Important Laptop State
-
-Both laptops have their parent git checkouts updated to `d9a1262`, but `/opt/pokelearnos` has not been redeployed because sudo needs an interactive password.
-
-```text
-10.0.100.47 / leoslaptop
-checkout: /home/parent/PokelearnOS-v3
-head: d9a1262
-
-10.0.100.62 / mikeslaptop
-checkout: /home/parent/PokelearnOS-v3-repair
-head: d9a1262
-```
-
-Finish deploy with:
+They do **not** yet have the ADR-004 purge commit. To redeploy (interactive
+sudo password required):
 
 ```bash
 ssh -t parent@10.0.100.47 'cd /home/parent/PokelearnOS-v3 && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
 
 ssh -t parent@10.0.100.62 'cd /home/parent/PokelearnOS-v3-repair && sudo POKELEARNOS_UPDATE_REF=repair/kiosk-release bash scripts/update.sh'
+```
+
+Check what a laptop is actually running (read-only, no sudo):
+
+```bash
+ssh parent@10.0.100.47 'git -C /home/parent/PokelearnOS-v3 log --oneline -1; ls -l /opt/pokelearnos/api-dist/index.mjs; curl -s http://127.0.0.1:8765/api/profiles'
+ssh parent@10.0.100.62 'git -C /home/parent/PokelearnOS-v3-repair log --oneline -1; ls -l /opt/pokelearnos/api-dist/index.mjs; curl -s http://127.0.0.1:8765/api/profiles'
 ```
 
 ## Architecture
@@ -122,28 +122,33 @@ flowchart TD
 
 ## Update Script Behavior
 
-`scripts/update.sh` does this on each laptop:
+`scripts/update.sh` on each laptop:
 
 ```text
-1. fetch/checkout/pull repair/kiosk-release
-2. cache Pokemon sprites
+1. git fetch/checkout/pull --ff-only of the deploy ref
+2. cache Pokemon sprites (cache-assets.py — needs network; warns + degrades
+   to the Poke Ball fallback on failure)
 3. pnpm install
 4. build frontend
 5. build backend
-6. rsync frontend/backend/system/scripts into /opt/pokelearnos
-7. preserve /opt/pokelearnos/.env and SQLite DB
-8. restart kids user's pokelearnos.service
+6. rsync api-dist/web (with --delete) + system/scripts into /opt/pokelearnos
+7. .env preserved (root-level, never rsynced); SQLite DB lives at
+   /home/kids/.local/share/pokelearnos/db.sqlite — untouched by design
+8. restart kids user's pokelearnos.service (best-effort; warns
+   "reboot to apply" on failure)
 ```
+
+Caveats:
+- Deploy ref precedence: `POKELEARNOS_UPDATE_REF` env var > laptop's current
+  branch > `repair/kiosk-release` fallback. Always set the env var (as the
+  commands above do).
+- If the `better-sqlite3` version changed, the script wipes
+  `/opt/pokelearnos/node_modules` and runs `npm install --omit=dev` there —
+  network-dependent and **fatal** on failure.
+- The pull is `--ff-only`: a rebase/force-push of the branch breaks laptop
+  deploys (escape hatch: `--no-pull` deploys the checkout as-is).
 
 ## Useful Commands
-
-Check local deploy branch:
-
-```bash
-cd /Users/zeb/Desktop/Pokelearn/PokelearnOS-v3-repair-work
-git status --short --branch
-git log --oneline -5
-```
 
 Run local gates:
 
@@ -154,19 +159,14 @@ npm exec --package tsx@4.21.0 --package @esbuild/darwin-arm64@0.27.3 -- tsx --te
 git diff --check
 ```
 
-Check laptop repo heads:
+## Known Loose Ends
 
-```bash
-ssh parent@10.0.100.47 'cd /home/parent/PokelearnOS-v3 && git status --short --branch && git log --oneline -1'
-ssh parent@10.0.100.62 'cd /home/parent/PokelearnOS-v3-repair && git status --short --branch && git log --oneline -1'
-```
-
-## Known Loose End
-
-There is a separate dirty main worktree at:
-
-```text
-/Users/zeb/Desktop/Pokelearn/PokelearnOS-v3
-```
-
-It contains geography/region image work using user-added country/climate images. That work was not ported or pushed to `repair/kiosk-release` in the latest deploy branch.
+1. **Geography/region image work is stranded** in the dirty main worktree at
+   `/Users/zeb/Desktop/Pokelearn/PokelearnOS-v3` — local `main` there is
+   ahead 2 (committed, unpushed geography commits) / behind 17 of
+   `origin/main`, plus uncommitted geography/region changes. Not ported to
+   `repair/kiosk-release`.
+2. **`repair/kiosk-release` has never been merged to `main`** — the deployed
+   kiosk code lives only on the side branch.
+3. **Avatar artwork gap** (see What Changed #3): profile screens show the
+   Poké Ball fallback instead of the new Dracovish/Zapdos art.

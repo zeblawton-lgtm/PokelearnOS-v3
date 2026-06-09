@@ -11,8 +11,8 @@ async function seedIfEmpty(): Promise<void> {
   const existing = await db.select().from(profilesTable);
   if (existing.length === 0) {
     await db.insert(profilesTable).values([
-      { name: "Michael", age: 5, avatarPokemonId: 882, dailyLimitMinutes: 20 },
-      { name: "Leo", age: 3, avatarPokemonId: 145, dailyLimitMinutes: 15 },
+      { name: "Michael", age: 5, avatarPokemonId: 882 },
+      { name: "Leo", age: 3, avatarPokemonId: 145 },
     ]);
     logger.info("Fresh database — seeded default profiles (Michael, Leo)");
     return;

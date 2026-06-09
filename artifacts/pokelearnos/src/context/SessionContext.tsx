@@ -30,7 +30,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const sess = await api.startSession(p.id);
-      setProfile({ ...p, dailyLimitMinutes: sess.dailyLimitMinutes });
+      setProfile(p);
       setSession(sess);
     } finally {
       setIsLoading(false);

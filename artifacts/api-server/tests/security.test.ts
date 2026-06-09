@@ -53,29 +53,25 @@ test("unauthenticated admin settings reads fail", async () => {
 });
 
 test("unauthenticated profile writes fail", async () => {
-  const writes = [
-    request("POST", "/profiles", {
-      name: "Test",
-      age: 5,
-      avatarPokemonId: 25,
-      dailyLimitMinutes: 15,
-    }),
+  const response = await request("POST", "/profiles", {
+    name: "Test",
+    age: 5,
+    avatarPokemonId: 25,
+  });
+
+  assert.equal(response.status, 401);
+});
+
+test("removed timer and profile-edit endpoints return 404", async () => {
+  const requests = [
+    request("GET", "/timer/1"),
+    request("POST", "/timer/1/adjust", { minutes: 5 }),
+    request("POST", "/timer/1/reset"),
     request("PATCH", "/profiles/1", { dailyLimitMinutes: 20 }),
   ];
 
-  for (const response of await Promise.all(writes)) {
-    assert.equal(response.status, 401);
-  }
-});
-
-test("unauthenticated timer writes fail", async () => {
-  const writes = [
-    request("POST", "/timer/1/adjust", { minutes: 5 }),
-    request("POST", "/timer/1/reset"),
-  ];
-
-  for (const response of await Promise.all(writes)) {
-    assert.equal(response.status, 401);
+  for (const response of await Promise.all(requests)) {
+    assert.equal(response.status, 404);
   }
 });
 

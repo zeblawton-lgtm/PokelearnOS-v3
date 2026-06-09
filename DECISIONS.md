@@ -30,3 +30,21 @@ the Web Audio API (zero asset weight, original); Spanish pronunciation uses the
 offline SpeechSynthesis API. Owner-supplied background music is bundled under
 `public/audio/` and managed by `src/lib/music.ts`, with parent mute controls.
 See `docs/credits.md` for music/sprite licensing caveats.
+
+## ADR-004 — No time-based session blocking (2026-06-09)
+**Context:** The kiosk originally enforced a configurable daily limit with a
+"Pokémon are resting" rest screen (old GOAL §6) and parent timer controls. The
+parent decided the kids can play without time limits; commit 92b4e5c removed
+the enforcement and the rest screen, but GOAL.md still required them and
+vestigial timer endpoints remained.
+
+**Decision:** Time-based blocking is out of scope product-wide. GOAL.md §1/§6/§9
+no longer require daily limits, countdowns, or a rest screen; the release gate
+instead requires that sessions start and run without time-based blocking. The
+legacy `/api/timer/*` endpoints, the admin-only PATCH /profiles daily-limit
+editor, the unused frontend timer API/types, and the daily-limit math were
+removed; API tests assert the removed endpoints now return 404. Sessions still
+record `minutesUsed` for the Progress page only. `profiles.daily_limit_minutes`
+stays in both schemas (unused) so existing kiosk SQLite databases need no
+destructive migration; orphaned `timer_adjustment:*` rows in `settings` are
+ignored.

@@ -9,8 +9,8 @@
 
 A single bootable `dist/pokelearnos.iso` for a Dell Inspiron 7306 2-in-1 that,
 after install, boots straight into a full-screen, touch-first, Pokémon-themed
-educational game for two children — fully offline, with daily time limits,
-per-child progress, and a parent-only admin/recovery flow.
+educational game for two children — fully offline, with per-child progress and
+a parent-only admin/recovery flow.
 
 ## 2. Target Hardware (fixed — do NOT re-validate)
 
@@ -42,10 +42,10 @@ Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habita
 
 ## 6. Session Control
 
-- Daily limit configurable 10–30 min (default 15), tracked per child.
-- Countdown + end-of-session warning; friendly "Your Pokémon are resting!" rest
-  screen the child cannot bypass.
-- Parent PIN/password overlay can extend or end the session.
+- No time-based blocking (ADR-004): no daily limit, countdown, or rest screen.
+  Children can play as long as they like; sessions record minutes used for the
+  Progress page only.
+- Parent PIN/password overlay can end the session.
 
 ## 7. Offline & Assets
 
@@ -62,7 +62,7 @@ Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habita
 
 The project is complete only when: repo structure exists; app launches locally;
 frontend loads local assets; backend API starts; database initialises; two child
-profiles exist; daily timer enforcement works; rest screen appears on timeout;
+profiles exist; sessions start and run without time-based blocking;
 parent admin overlay works; LLM can be disabled without breaking the app; offline
 mode works; `pnpm run typecheck` passes; the ISO build command exists and is
 reproducible; docs, QA report, and security report are complete.

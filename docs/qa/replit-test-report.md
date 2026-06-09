@@ -78,3 +78,18 @@ POST /api/admin/seed           → 401 without admin bearer token
 - The api-server esbuild bundle and on-host ISO build target **linux-x64** (Replit/device);
   they cannot run on this arm64 dev sandbox (native-binary pinning), but build on the target unchanged.
 - Background music is Nintendo-copyrighted (owner-supplied) — see `docs/credits.md`; replace before any public/commercial distribution.
+
+---
+
+## Update — 2026-06-09 (time-based blocking removed end-to-end)
+
+Time-based blocking is no longer part of the product (GOAL.md §6/§9, ADR-004).
+Rows above that reference timer behavior describe earlier states of the app.
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `/api/timer/*` endpoints | REMOVED | All timer routes deleted; requests return 404 (regression-tested) |
+| `PATCH /api/profiles/:id` daily-limit editor | REMOVED | Endpoint deleted; returns 404 |
+| Top bar | UPDATED | `TimerBar` → `TopBar`; home + parent-lock buttons only, no timer/"No limit" label |
+| Profile cards | UPDATED | "No limit" badge removed |
+| DB schema | UNCHANGED | `profiles.daily_limit_minutes` retained (unused) — no destructive kiosk migration |

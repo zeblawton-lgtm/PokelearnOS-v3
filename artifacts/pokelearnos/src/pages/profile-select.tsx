@@ -102,9 +102,6 @@ export default function ProfileSelect() {
               <p className="text-4xl font-black text-gray-800">{profile.name}</p>
               <p className="text-xl text-gray-500 font-bold mt-1">Age {profile.age}</p>
             </div>
-            <div className="bg-pokemon-yellow/20 rounded-2xl px-4 py-2">
-              <p className="text-lg font-bold text-pokemon-darkred">No limit</p>
-            </div>
           </motion.button>
         ))}
       </div>

@@ -17,6 +17,8 @@ export const profilesTable = sqliteTable("profiles", {
   name: text("name").notNull(),
   age: integer("age").notNull(),
   avatarPokemonId: integer("avatar_pokemon_id").notNull().default(25),
+  // Unused since ADR-004 (no time-based blocking); kept so existing kiosk
+  // databases need no destructive migration.
   dailyLimitMinutes: integer("daily_limit_minutes").notNull().default(15),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()

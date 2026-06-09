@@ -14,7 +14,7 @@ import PokedexPage from "@/pages/pokedex";
 import RegionsPage from "@/pages/regions";
 import NotFound from "@/pages/not-found";
 import { ParentOverlay } from "@/components/ParentOverlay";
-import { TimerBar } from "@/components/TimerBar";
+import { TopBar } from "@/components/TopBar";
 import * as music from "@/lib/music";
 
 const queryClient = new QueryClient({
@@ -35,7 +35,7 @@ function AppRoutes() {
 
   return (
     <>
-      <TimerBar />
+      <TopBar />
       <div className="pt-16 pb-4 min-h-screen">
         <AnimatePresence mode="wait">
           <Switch key={location}>

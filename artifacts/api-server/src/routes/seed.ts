@@ -13,8 +13,8 @@ router.post("/admin/seed", requireAdminAuth, async (_req, res) => {
   }
 
   const profiles = await db.insert(profilesTable).values([
-    { name: "Michael", age: 5, avatarPokemonId: 882, dailyLimitMinutes: 20 },
-    { name: "Leo", age: 3, avatarPokemonId: 145, dailyLimitMinutes: 15 },
+    { name: "Michael", age: 5, avatarPokemonId: 882 },
+    { name: "Leo", age: 3, avatarPokemonId: 145 },
   ]).returning();
 
   res.status(201).json({ ok: true, message: "Seeded", profiles });

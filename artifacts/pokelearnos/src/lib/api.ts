@@ -39,36 +39,14 @@ export interface Profile {
   name: string;
   age: number;
   avatarPokemonId: number;
-  dailyLimitMinutes: number;
 }
 
 export interface SessionInfo {
   id: number;
   profileId: number;
   startedAt: string;
+  endedAt: string | null;
   minutesUsed: number;
-  dailyLimitMinutes: number;
-  timeAdjustmentSeconds: number;
-  timeAdjustmentMinutes: number;
-  minutesRemaining: number | null;
-  secondsRemaining: number | null;
-  isExpired: boolean;
-  isUnlimited: boolean;
-  openSessionCount: number;
-}
-
-export interface TimerState {
-  sessionId: number | null;
-  profileId: number;
-  dailyLimitMinutes: number;
-  timeAdjustmentSeconds: number;
-  timeAdjustmentMinutes: number;
-  minutesUsedToday: number;
-  minutesRemaining: number | null;
-  secondsRemaining: number | null;
-  openSessionCount: number;
-  isExpired: boolean;
-  isUnlimited: boolean;
 }
 
 export const api = {
@@ -78,16 +56,7 @@ export const api = {
     req<SessionInfo>("POST", "/sessions/start", { profileId }),
 
   endSession: (sessionId: number) =>
-    req<{ ok: true }>("POST", `/sessions/${sessionId}/end`),
-
-  getTimer: (profileId: number) =>
-    req<TimerState>("GET", `/timer/${profileId}`),
-
-  adjustTimer: (profileId: number, minutes: number) =>
-    req<TimerState>("POST", `/timer/${profileId}/adjust`, { minutes }),
-
-  resetTimer: (profileId: number) =>
-    req<TimerState>("POST", `/timer/${profileId}/reset`),
+    req<SessionInfo>("POST", `/sessions/${sessionId}/end`),
 
   logAttempt: (data: {
     sessionId: number;
@@ -119,9 +88,6 @@ export const api = {
 
   changePin: (currentPin: string, newPin: string) =>
     req<{ ok: true }>("POST", "/admin/change-pin", { currentPin, newPin }),
-
-  updateProfile: (id: number, data: Partial<Pick<Profile, "dailyLimitMinutes">>) =>
-    req<Profile>("PATCH", `/profiles/${id}`, data),
 
   getStats: (profileId: number) =>
     req<{ totalCorrect: number; totalAttempts: number; moduleBreakdown: Record<string, { correct: number; total: number }> }>(

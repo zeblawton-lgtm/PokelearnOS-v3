@@ -10,10 +10,10 @@
 When PokéLearnOS starts you'll see the profile selection screen.
 Tap the card for the child who is learning today:
 
-| Profile | Age | Avatar | Timer |
-|---------|-----|--------|-------|
-| **Michael** | 5 | Dracovish | No limit |
-| **Leo** | 3 | Zapdos | No limit |
+| Profile | Age | Avatar |
+|---------|-----|--------|
+| **Michael** | 5 | Dracovish |
+| **Leo** | 3 | Zapdos |
 
 ---
 
@@ -32,11 +32,11 @@ Leo gets the concrete visual version; Michael gets the more detailed version.
 
 ---
 
-## Session Timer
+## Screen Time
 
-The time restriction is disabled. The top bar now shows **No limit**, and the
-app does not block learning time or move children to the Rest Screen because
-of elapsed minutes.
+There are no app-imposed time limits. The app never blocks learning time or
+shows a rest screen. Each session's minutes are recorded only so the Progress
+page can show history. End a session any time from the parent panel.
 
 ---
 
@@ -62,23 +62,6 @@ From the parent panel:
 3. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user stop pokelearnos.service` — stops the kiosk
 4. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) journalctl --user -u pokelearnos.service -n 50` — view logs if something is broken
 5. `sudo -u kids XDG_RUNTIME_DIR=/run/user/$(id -u kids) systemctl --user start pokelearnos.service` — restart the kiosk
-
----
-
-## Timer Restrictions
-
-Daily time limits are currently disabled in the kiosk app.
-
-The backend still records session usage for progress/history and keeps legacy
-timer endpoints for compatibility, but those endpoints no longer stop a child
-from starting or continuing a session. The parent panel no longer exposes
-add/remove/reset timer controls.
-
-Via the API (advanced — while backend is running), timer reads should report an
-unlimited state:
-```bash
-curl -s http://localhost:8765/api/timer/1
-```
 
 ---
 
@@ -115,10 +98,10 @@ ssh parent@10.0.100.56 \
 
 Default profiles are seeded automatically by the backend when the database is empty.
 
-| Name | Age | Pokémon | Timer |
-|------|-----|---------|-------|
-| Michael | 5 | Dracovish (#882) | No limit |
-| Leo | 3 | Zapdos (#145) | No limit |
+| Name | Age | Pokémon |
+|------|-----|---------|
+| Michael | 5 | Dracovish (#882) |
+| Leo | 3 | Zapdos (#145) |
 
 ---
 
