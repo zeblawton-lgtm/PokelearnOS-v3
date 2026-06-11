@@ -231,9 +231,12 @@ export default function MatchPage() {
   }, [board, flipped, matched, pairsFound, PAIRS, logAttempt]);
 
   // ── Grid layout ──────────────────────────────────────────────────────────
-  // 4×2 for 3yo (8 cards), 4×4 for 5yo (16 cards).
-  const cols = 4;
-  const rows = PAIRS / 2; // 2 for 3yo (→ 4 rows? no: 8 cards / 4 cols = 2 rows), 4 for 5yo
+  // The kiosk is landscape (~1920×969 CSS px), so spread the cards wide and
+  // keep only 2 rows — that's what maximises card size: 4×2 for the 3yo
+  // (~340 px cards), 8×2 for the 5yo (~215 px cards). A 4×4 grid would be
+  // height-bound at ~160 px cards.
+  const cols = is3yo ? 4 : 8;
+  const rows = (PAIRS * 2) / cols;
 
   // ── Completion screen ────────────────────────────────────────────────────
   if (done) {
@@ -338,15 +341,16 @@ export default function MatchPage() {
       {/* Board */}
       <div className="flex-1 flex items-center justify-center min-h-0">
         <div
-          className="grid gap-3"
+          className="grid gap-4"
           style={{
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gridTemplateRows: `repeat(${rows}, 1fr)`,
-            // Height-driven sizing: width follows from the aspect ratio so
-            // every cell stays square (w-full + maxHeight would break it).
-            height: "100%",
-            maxHeight: "70vh",
-            maxWidth: "100%",
+            // Width-driven sizing in viewport units — percentage heights
+            // don't resolve here (the page's h-full chain sits under a
+            // min-h-screen parent, so they collapse to auto and the cards
+            // shrink to their 88px minimums). Width is definite, and
+            // aspect-ratio derives the height from it reliably.
+            width: `min(94vw, calc(72vh * ${cols} / ${rows}))`,
             aspectRatio: `${cols} / ${rows}`,
           }}
         >
