@@ -26,7 +26,19 @@ Note: the local branch has no upstream tracking configured, so
 
 ## What Changed (most recent first)
 
-1. **Lock-screen lockout fixed in kiosk-lockdown.sh (2026-06-11).** The
+1. **Pokémon name pronunciation + Memory Match replay music leak (2026-06-11).**
+   - `src/content/pronunciations.ts` (535 entries, Gens 1-5) maps names to
+     TTS-friendly respellings, sourced from Smogon's official pronunciation
+     guide; `src/lib/pronounce.ts` exposes `spokenName()` / `spokenText()`.
+     Applied at every narration call site (pokedex, dots, match, math
+     questions/explanations incl. word-problem prose, Spanish color answers,
+     regions blurbs). Display text always shows the real name; only the
+     string sent to /api/tts changes. Unmapped names (Gens 6-9) pass through.
+   - Memory Match "Play Again" now calls `music.stop()` — it stays on the
+     route, so App's route effect never fired and the full-length completion
+     song kept playing through the next game.
+
+2. **Lock-screen lockout fixed in kiosk-lockdown.sh (2026-06-11).** The
    script's dconf steps (3/4/5/9) wrote *text keyfiles into
    `/home/kids/.config/dconf/`*, which dconf never reads — so screen-lock
    disable, idle-delay=0, shortcut blocking, and orientation lock were all
@@ -40,7 +52,7 @@ Note: the local branch has no upstream tracking configured, so
    each laptop** (then reboot) — `update.sh` only rsyncs files, it does not
    execute the lockdown script.
 
-2. **Creative corner modules (2026-06-11, ADR-006).** Four new frontend-only
+3. **Creative corner modules (2026-06-11, ADR-006).** Four new frontend-only
    pages, wired into App.tsx routes (all music-free like other modules),
    home-screen tiles, and Progress-page labels. No backend/schema changes —
    they log through the existing `POST /api/attempts` (`module` is free text).
@@ -57,7 +69,7 @@ Note: the local branch has no upstream tracking configured, so
    All four prefetch their TTS audio on mount and follow the ≥88 px
    touch-target and positive-feedback rules.
 
-3. **Voice narration + menu-only music (2026-06-09, ADR-005).**
+4. **Voice narration + menu-only music (2026-06-09, ADR-005).**
    - Backend `GET /api/tts?text&lang=en|es|auto` (`routes/tts.ts`) proxies the
      LAN Qwen3-TTS box (Gradio `run_instruct`; voice **Vivian**) and caches
      wavs on disk. Env: `TTS_URL` (default `http://10.0.100.137:8000`),
@@ -76,7 +88,7 @@ Note: the local branch has no upstream tracking configured, so
    - Verified live against the real box through the proxy: en + es synthesis,
      1.5 ms cached replay, valid 24 kHz PCM wav.
 
-4. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
+5. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
    - GOAL.md §1/§6/§9 no longer require daily limits or a rest screen; the
      release gate now requires sessions run without time-based blocking.
    - Backend: `/api/timer/*` and `PATCH /api/profiles/:id` deleted (requests
@@ -92,13 +104,13 @@ Note: the local branch has no upstream tracking configured, so
    - Docs updated: parent guide, architecture, README, `.claude/agents/*`,
      QA report appendix.
 
-5. **Number-only math for Michael** (`d9a1262`).
+6. **Number-only math for Michael** (`d9a1262`).
    - The split is keyed by profile **age** (`age <= 3` gets picture-based
      visuals), not by name — "Michael" appears nowhere in frontend logic.
    - Age > 3: large numeric equations, bigger answer numerals, large-text word
      problems. Age <= 3 (Leo): unchanged picture-based count/add/subtract.
 
-6. **Default avatars changed** (`33d3608`).
+7. **Default avatars changed** (`33d3608`).
    - Michael: Dracovish `#882`; Leo: Zapdos `#145`.
    - Startup migration in `api-server/src/index.ts` moves old defaults
      (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
@@ -110,11 +122,11 @@ Note: the local branch has no upstream tracking configured, so
      `SPRITE()` helper and its `sprites/pokemon/` path are simply unused by
      the avatar screens.)
 
-7. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
+8. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
    Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
    the generic mountain/ocean GeoScenes).
 
-8. **Security/test work** — API tests cover unauthenticated admin/profile
+9. **Security/test work** — API tests cover unauthenticated admin/profile
    writes failing, removed endpoints returning 404, bearer-token validity, PIN
    rate limiting, CORS, and the TTS proxy (mock Gradio box: synth, disk cache,
    validation, 503 fallback). Local gates last verified 2026-06-09: frontend +

@@ -6,6 +6,7 @@ import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { pokedex, TYPE_COLORS, type PokedexEntry } from "@/content/pokedex";
 import { playTap } from "@/lib/sound";
 import { speakText } from "@/lib/tts";
+import { spokenName } from "@/lib/pronounce";
 import { markPokemonLearned } from "@/lib/storage";
 import { GeoScene } from "@/components/GeoScene";
 import { getPokemonHabitat } from "@/lib/pokemonHabitat";
@@ -17,7 +18,7 @@ export default function PokedexPage() {
 
   const open = (p: PokedexEntry) => {
     playTap();
-    void speakText(p.name, "en");
+    void speakText(spokenName(p.name), "en");
     markPokemonLearned(p.id);
     setActive(p);
   };
@@ -122,7 +123,7 @@ export default function PokedexPage() {
               )}
               <p className="text-xl font-bold text-gray-600 leading-snug">{active.fact}</p>
               <button
-                onClick={() => void speakText(active.name, "en")}
+                onClick={() => void speakText(spokenName(active.name), "en")}
                 className="mt-5 bg-pokemon-blue text-white text-xl font-black px-8 py-4 rounded-3xl min-h-[64px]"
               >
                 🔊 Say the name

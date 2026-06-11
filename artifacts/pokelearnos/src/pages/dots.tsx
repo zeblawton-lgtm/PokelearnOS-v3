@@ -13,6 +13,7 @@ import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playTap, playCorrect, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
 import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenName } from "@/lib/pronounce";
 import { extractOutlinePoints } from "@/lib/contour";
 import { pokedex } from "@/content/pokedex";
 import { useSession } from "@/context/SessionContext";
@@ -188,7 +189,7 @@ function PuzzleBoard({ pokemonId, dotCount, puzzleIndex, onComplete }: PuzzlePro
         // All dots connected — reveal the Pokémon.
         setRevealed(true);
         playCorrect();
-        void speakText(`It's ${name}!`, "en");
+        void speakText(`It's ${spokenName(name)}!`, "en");
         void logAttempt("dots", `dots-${pokemonId}`, true);
       }
     },

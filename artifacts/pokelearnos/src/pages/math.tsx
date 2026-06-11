@@ -2,6 +2,7 @@ import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
 import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenText } from "@/lib/pronounce";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -319,14 +320,14 @@ export default function MathPage() {
   // Read each question aloud (Vivian voice; falls back to SpeechSynthesis).
   useEffect(() => {
     if (done) return;
-    void speakText(getSpokenQuestion(q, gamePokemon.name, is3yo), "en");
+    void speakText(spokenText(getSpokenQuestion(q, gamePokemon.name, is3yo)), "en");
   }, [q, gamePokemon.name, is3yo, done]);
   useEffect(() => () => stopSpeaking(), []);
 
   // Warm the audio for this session's questions so narration is instant.
   useEffect(() => {
     void prefetch(questions.map((qq) => ({
-      text: getSpokenQuestion(qq, gamePokemon.name, is3yo),
+      text: spokenText(getSpokenQuestion(qq, gamePokemon.name, is3yo)),
       lang: "en" as const,
     })));
   }, [questions, gamePokemon.name, is3yo]);
@@ -340,7 +341,7 @@ export default function MathPage() {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
-    if (correct) { stopSpeaking(); playCorrect(); } else { playWrong(); void speakText(getSpokenExplanation(q), "en"); }
+    if (correct) { stopSpeaking(); playCorrect(); } else { playWrong(); void speakText(spokenText(getSpokenExplanation(q)), "en"); }
     if (correct) { setScore(s => s + 1); if (!is3yo) setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);

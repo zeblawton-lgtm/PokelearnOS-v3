@@ -2,6 +2,7 @@ import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
 import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenName } from "@/lib/pronounce";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -72,7 +73,9 @@ export default function SpanishPage() {
     setSelected(choice);
     const correct = choice === q.answer;
     if (correct) { playCorrect(); if (q.spanishWord) void speakText(q.spanishWord, "es"); else stopSpeaking(); }
-    else { playWrong(); void speakText(q.answer, "auto"); }
+    // Color-question answers are Pokémon names; spokenName passes Spanish
+    // words through untouched (they aren't map keys).
+    else { playWrong(); void speakText(spokenName(q.answer), "auto"); }
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);

@@ -4,8 +4,9 @@
 
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playTap, playCorrect, playFanfare } from "@/lib/sound";
-import { playJingle } from "@/lib/music";
+import { playJingle, stop as stopMusic } from "@/lib/music";
 import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenName } from "@/lib/pronounce";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -160,12 +161,15 @@ export default function MatchPage() {
   // Prefetch Pokémon names on mount
   useEffect(() => {
     const ids = Array.from(new Set(board.map((c) => c.pokemonId)));
-    void prefetch(ids.map((id) => ({ text: pokeName(id), lang: "en" as const })));
+    void prefetch(ids.map((id) => ({ text: spokenName(pokeName(id)), lang: "en" as const })));
     return () => stopSpeaking();
   }, [board]);
 
   const startNewGame = useCallback(() => {
     stopSpeaking();
+    // "Play Again" stays on this route, so App's route effect never runs —
+    // without this the completion song keeps playing through the new game.
+    stopMusic();
     locked.current = false;
     firstCard.current = null;
     setBoard(buildBoard(PAIRS));
@@ -201,7 +205,7 @@ export default function MatchPage() {
     if (first.pairId === clickedCard.pairId) {
       // Match!
       playCorrect();
-      void speakText(pokeName(clickedCard.pokemonId), "en");
+      void speakText(spokenName(pokeName(clickedCard.pokemonId)), "en");
 
       const newMatched = new Set([...matched, first.uid, clickedCard.uid]);
       setMatched(newMatched);

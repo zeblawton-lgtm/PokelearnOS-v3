@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playTap } from "@/lib/sound";
 import { speakText } from "@/lib/tts";
+import { spokenText } from "@/lib/pronounce";
 import { GeoScene, type GeoSceneKind } from "@/components/GeoScene";
 
 // "Pokémon Homes" — teaches real-world habitat/biome concepts (forests, oceans,
@@ -33,7 +34,7 @@ const HABITATS: Habitat[] = [
 export default function RegionsPage() {
   const [, navigate] = useLocation();
 
-  const tap = (h: Habitat) => { playTap(); void speakText(`${h.name}. ${h.climate}.`, "en"); };
+  const tap = (h: Habitat) => { playTap(); void speakText(spokenText(`${h.name}. ${h.climate}.`), "en"); };
 
   return (
     <div className="flex flex-col h-full px-4 py-4">
