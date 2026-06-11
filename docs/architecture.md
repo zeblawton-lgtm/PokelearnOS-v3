@@ -23,7 +23,9 @@
 │  /api/stats/:id     GET per-profile accuracy stats       │
 │  /api/admin/*       PIN verify, settings, change-pin     │
 │  /api/tts           GET voice proxy → LAN Qwen3-TTS box  │
-│                     (disk-cached wav; 503 → SpeechSynth) │
+│                     (prefers /tts/prompt mp3 cloned      │
+│                     voice, Gradio wav fallback; disk-    │
+│                     cached; 503 → SpeechSynth)           │
 │  /api/healthz       GET health check                     │
 └─────────────────────────────────────────────────────────┘
                            │ Drizzle ORM

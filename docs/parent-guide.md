@@ -66,6 +66,12 @@ narrated in English, and the same voice reads all the Spanish words. If the
 TTS box is off, the app falls back to the built-in robot voice automatically,
 and phrases the kids have already heard keep playing from the cache.
 
+When the box's prompt-cache endpoint (`/tts/prompt`) is running, the kiosk
+prefers it and the kids hear the **cloned voice** instead of Vivian; phrases
+recorded earlier in Vivian's voice are re-recorded quietly in the background.
+If that endpoint runs on a different port than the box's main URL, set
+`TTS_PROMPT_URL` in `/opt/pokelearnos/.env`.
+
 Background music plays only on the menu screens and the end-of-module
 celebration — questions are music-free so the voice is easy to hear. The
 parent panel's sound toggle mutes narration too.

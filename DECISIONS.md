@@ -93,3 +93,24 @@ assets; completing the loop reveals the artwork), and **Memory Match**
 All four follow the kiosk rules: offline-only bundled assets, ≥88 px touch
 targets, positive feedback only, narration via the ADR-005 TTS path with
 prefetch, music stays menu-only with the completion fanfare/jingle.
+
+## ADR-007 — Box-side TTS prompt cache with cloned voice (2026-06-11)
+**Context:** The owner is adding `POST /tts/prompt` to the TTS box (per their
+spec; implementation in progress box-side): it normalizes + hashes the text,
+returns a cached MP3 path immediately when known, and otherwise synthesizes
+with Qwen3-TTS **voice clone** (authorized local reference sample,
+`voice_clone.py`) and converts to MP3. This builds a persistent prompt-audio
+library on the box, shared by every kiosk, in the cloned voice.
+
+**Decision:** The kiosk proxy (`routes/tts.ts`) prefers that endpoint:
+`POST {TTS_PROMPT_URL || TTS_URL}/tts/prompt {text, language}` → download the
+returned MP3 → cache under `TTS_CACHE_DIR` keyed with voice marker `clone`
+(never collides with legacy Vivian wavs). If the endpoint is missing or the
+connection fails, that's negative-cached for 5 minutes and the existing
+Gradio "Vivian" flow is used — today's behavior is unchanged until the box
+endpoint ships. Phrases that only have a legacy wav are served instantly and
+re-synthesized with the cloned voice in the background, strictly one at a
+time (the box runner loads the model per call), so the library migrates
+voice without ever making a child wait. The prompt call gets a 120 s timeout
+for the same reason. Frontend and offline guarantees are untouched
+(SpeechSynthesis fallback stands; the app never requires the box).

@@ -18,10 +18,31 @@ process.env.TTS_CACHE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "pokelearnos-t
 // stream -> wav file download.
 // ---------------------------------------------------------------------------
 const WAV = Buffer.from("RIFFfake-wav-bytes-for-test");
+const MP3 = Buffer.from("ID3fake-mp3-bytes-for-test");
 let synthCalls = 0;
+let promptCalls = 0;
+// The ADR-007 prompt-cache endpoint is toggleable so tests can cover both
+// "deployed" and "not deployed yet" box states.
+let promptEnabled = false;
 let mockPort = 0;
 
 const mock = http.createServer((req, res) => {
+  if (req.method === "POST" && req.url === "/tts/prompt") {
+    promptCalls += 1;
+    if (!promptEnabled) {
+      res.statusCode = 404;
+      res.end();
+      return;
+    }
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ audio: "assets/audio/prompts/qwen3-tts-test.mp3", cached: false }));
+    return;
+  }
+  if (req.url === "/assets/audio/prompts/qwen3-tts-test.mp3") {
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.end(MP3);
+    return;
+  }
   if (req.method === "POST" && req.url === "/gradio_api/call/run_instruct") {
     synthCalls += 1;
     res.setHeader("Content-Type", "application/json");
@@ -50,7 +71,7 @@ mockPort = (mock.address() as AddressInfo).port;
 process.env.TTS_URL = `http://127.0.0.1:${mockPort}`;
 
 // Import AFTER env is set — the tts route reads TTS_URL at module load.
-const { parseGradioFileUrl, ttsCacheKey } = await import("../src/routes/tts");
+const { parseGradioFileUrl, ttsCacheKey, resetTtsRuntimeState } = await import("../src/routes/tts");
 const { default: app } = await import("../src/app");
 
 let baseUrl = "";
@@ -88,17 +109,76 @@ test("ttsCacheKey is deterministic and varies by language", () => {
   assert.notEqual(ttsCacheKey("hola", "es", "Vivian"), ttsCacheKey("hola", "en", "Vivian"));
 });
 
-test("GET /tts synthesizes via the TTS box and caches on disk", async () => {
+test("GET /tts falls back to Gradio when the prompt cache is absent, and negative-caches the absence", async () => {
+  resetTtsRuntimeState();
+  promptEnabled = false;
+  const promptCallsBefore = promptCalls;
+
   const first = await fetch(`${baseUrl}/tts?text=hello%20there&lang=en`);
   assert.equal(first.status, 200);
   assert.equal(first.headers.get("content-type")?.includes("audio/wav"), true);
   assert.deepEqual(Buffer.from(await first.arrayBuffer()), WAV);
   assert.equal(synthCalls, 1);
+  assert.equal(promptCalls, promptCallsBefore + 1); // probed once, got 404
 
   const second = await fetch(`${baseUrl}/tts?text=hello%20there&lang=en`);
   assert.equal(second.status, 200);
   assert.deepEqual(Buffer.from(await second.arrayBuffer()), WAV);
   assert.equal(synthCalls, 1); // served from the disk cache
+
+  // A different uncached phrase: the 404 is negative-cached, so the prompt
+  // endpoint must NOT be probed again — straight to Gradio.
+  const third = await fetch(`${baseUrl}/tts?text=something%20else&lang=en`);
+  assert.equal(third.status, 200);
+  assert.equal(third.headers.get("content-type")?.includes("audio/wav"), true);
+  assert.equal(synthCalls, 2);
+  assert.equal(promptCalls, promptCallsBefore + 1);
+});
+
+test("GET /tts prefers the box prompt cache (mp3) when deployed", async () => {
+  resetTtsRuntimeState();
+  promptEnabled = true;
+  const synthCallsBefore = synthCalls;
+  const promptCallsBefore = promptCalls;
+
+  const first = await fetch(`${baseUrl}/tts?text=cloned%20voice%20phrase&lang=en`);
+  assert.equal(first.status, 200);
+  assert.equal(first.headers.get("content-type")?.includes("audio/mpeg"), true);
+  assert.deepEqual(Buffer.from(await first.arrayBuffer()), MP3);
+  assert.equal(promptCalls, promptCallsBefore + 1);
+  assert.equal(synthCalls, synthCallsBefore); // Gradio untouched
+
+  const second = await fetch(`${baseUrl}/tts?text=cloned%20voice%20phrase&lang=en`);
+  assert.equal(second.status, 200);
+  assert.equal(second.headers.get("content-type")?.includes("audio/mpeg"), true);
+  assert.equal(promptCalls, promptCallsBefore + 1); // served from the disk cache
+});
+
+test("GET /tts serves a legacy wav instantly and upgrades it to the cloned voice in the background", async () => {
+  resetTtsRuntimeState();
+  promptEnabled = true;
+  const promptCallsBefore = promptCalls;
+
+  // "hello there" was wav-cached by the Gradio fallback test above.
+  const res = await fetch(`${baseUrl}/tts?text=hello%20there&lang=en`);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("content-type")?.includes("audio/wav"), true); // instant legacy hit
+
+  // The background upgrade re-synthesizes via the prompt cache...
+  for (let i = 0; i < 100 && promptCalls === promptCallsBefore; i++) {
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  assert.equal(promptCalls, promptCallsBefore + 1);
+
+  // ...so the phrase serves as cloned-voice mp3 afterwards.
+  let upgraded: Response | null = null;
+  for (let i = 0; i < 100; i++) {
+    upgraded = await fetch(`${baseUrl}/tts?text=hello%20there&lang=en`);
+    if (upgraded.headers.get("content-type")?.includes("audio/mpeg")) break;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  assert.equal(upgraded?.headers.get("content-type")?.includes("audio/mpeg"), true);
+  assert.deepEqual(Buffer.from(await upgraded!.arrayBuffer()), MP3);
 });
 
 test("GET /tts validates text and lang", async () => {
@@ -114,6 +194,7 @@ test("GET /tts validates text and lang", async () => {
 
 test("GET /tts returns 503 when the TTS box is unreachable", async () => {
   // Uncached text + the mock taken down = synthesis must fail gracefully.
+  resetTtsRuntimeState();
   mock.close();
   await once(mock, "close");
   const res = await fetch(`${baseUrl}/tts?text=never%20cached&lang=en`);
