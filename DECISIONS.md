@@ -103,7 +103,8 @@ with Qwen3-TTS **voice clone** (authorized local reference sample,
 library on the box, shared by every kiosk, in the cloned voice.
 
 **Decision:** The kiosk proxy (`routes/tts.ts`) prefers that endpoint:
-`POST {TTS_PROMPT_URL || TTS_URL}/tts/prompt {text, language}` → download the
+`POST {TTS_PROMPT_URL}/tts/prompt {text, language}` (default
+`http://10.0.100.137:8765`, the owner's chosen port) → download the
 returned MP3 → cache under `TTS_CACHE_DIR` keyed with voice marker `clone`
 (never collides with legacy Vivian wavs). If the endpoint is missing or the
 connection fails, that's negative-cached for 5 minutes and the existing

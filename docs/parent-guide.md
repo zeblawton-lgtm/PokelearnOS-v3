@@ -69,8 +69,8 @@ and phrases the kids have already heard keep playing from the cache.
 When the box's prompt-cache endpoint (`/tts/prompt`) is running, the kiosk
 prefers it and the kids hear the **cloned voice** instead of Vivian; phrases
 recorded earlier in Vivian's voice are re-recorded quietly in the background.
-If that endpoint runs on a different port than the box's main URL, set
-`TTS_PROMPT_URL` in `/opt/pokelearnos/.env`.
+The kiosk looks for it at `http://10.0.100.137:8765` — set `TTS_PROMPT_URL`
+in `/opt/pokelearnos/.env` if it moves.
 
 Background music plays only on the menu screens and the end-of-module
 celebration — questions are music-free so the voice is easy to hear. The

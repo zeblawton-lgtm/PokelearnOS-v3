@@ -31,7 +31,8 @@ import type { Logger } from "pino";
 const router = Router();
 
 const TTS_URL = (process.env["TTS_URL"] ?? "http://10.0.100.137:8000").replace(/\/+$/, "");
-const TTS_PROMPT_URL = (process.env["TTS_PROMPT_URL"] ?? TTS_URL).replace(/\/+$/, "");
+// The box's prompt-cache server (ADR-007) lives on its own port.
+const TTS_PROMPT_URL = (process.env["TTS_PROMPT_URL"] ?? "http://10.0.100.137:8765").replace(/\/+$/, "");
 const TTS_VOICE = process.env["TTS_VOICE"] ?? "Vivian";
 const TTS_INSTRUCT =
   process.env["TTS_INSTRUCT"] ??

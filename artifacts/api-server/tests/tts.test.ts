@@ -69,6 +69,7 @@ mock.listen(0, "127.0.0.1");
 await once(mock, "listening");
 mockPort = (mock.address() as AddressInfo).port;
 process.env.TTS_URL = `http://127.0.0.1:${mockPort}`;
+process.env.TTS_PROMPT_URL = `http://127.0.0.1:${mockPort}`;
 
 // Import AFTER env is set — the tts route reads TTS_URL at module load.
 const { parseGradioFileUrl, ttsCacheKey, resetTtsRuntimeState } = await import("../src/routes/tts");
