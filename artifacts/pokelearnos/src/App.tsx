@@ -9,6 +9,10 @@ import Home from "@/pages/home";
 import MathPage from "@/pages/math";
 import SpanishPage from "@/pages/spanish";
 import GeographyPage from "@/pages/geography";
+import ColoringPage from "@/pages/coloring";
+import TracingPage from "@/pages/tracing";
+import DotsPage from "@/pages/dots";
+import MatchPage from "@/pages/match";
 import Progress from "@/pages/progress";
 import PokedexPage from "@/pages/pokedex";
 import RegionsPage from "@/pages/regions";
@@ -29,7 +33,7 @@ function AppRoutes() {
     if (!profile) { music.stop(); return; }
     // Learning modules are music-free so narration is clear; the completion
     // jingle still plays over silence when a module finishes.
-    if (["/math", "/spanish", "/geography"].includes(location)) music.stop();
+    if (["/math", "/spanish", "/geography", "/coloring", "/tracing", "/dots", "/match"].includes(location)) music.stop();
     else music.playScene("menu");
   }, [profile, location]);
 
@@ -45,6 +49,10 @@ function AppRoutes() {
             <Route path="/math" component={MathPage} />
             <Route path="/spanish" component={SpanishPage} />
             <Route path="/geography" component={GeographyPage} />
+            <Route path="/coloring" component={ColoringPage} />
+            <Route path="/tracing" component={TracingPage} />
+            <Route path="/dots" component={DotsPage} />
+            <Route path="/match" component={MatchPage} />
             <Route path="/progress" component={Progress} />
             <Route path="/pokedex" component={PokedexPage} />
             <Route path="/regions" component={RegionsPage} />

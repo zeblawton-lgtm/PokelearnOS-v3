@@ -37,6 +37,10 @@ ORM with Postgres (dev) / SQLite (kiosk) · Chromium kiosk on Ubuntu LTS.
   near/far. Pokémon are imaginative guides only; never present fictional regions
   as real places.
 - **Spanish** — colors, numbers, greetings, simple phrases, matching.
+- **Creative corner (ADR-006)** — Coloring (finger-paint over bundled Pokémon
+  artwork), Tracing (letters, numbers, shapes), Connect the Dots (outlines
+  generated at runtime from bundled artwork), and Memory Match. Fully offline,
+  touch-first, positive feedback only.
 
 Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habitats).
 

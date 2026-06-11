@@ -16,6 +16,10 @@ const MODULE_META: Record<string, { label: string; color: string }> = {
   math: { label: "Math", color: "bg-pokemon-red" },
   spanish: { label: "Spanish", color: "bg-pokemon-blue" },
   geography: { label: "World Explorer", color: "bg-green-500" },
+  coloring: { label: "Coloring", color: "bg-pink-500" },
+  tracing: { label: "Tracing", color: "bg-purple-500" },
+  dots: { label: "Connect Dots", color: "bg-orange-500" },
+  match: { label: "Memory Match", color: "bg-teal-500" },
 };
 
 const SPRITE = ARTWORK;

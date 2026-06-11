@@ -1,7 +1,7 @@
 # PokeLearnOS Agent Handoff
 
-Last updated: 2026-06-09 (Vivian TTS narration + menu-only music, ADR-005;
-time-based blocking removed end-to-end, ADR-004)
+Last updated: 2026-06-11 (creative corner modules, ADR-006; Vivian TTS
+narration + menu-only music, ADR-005; time-based blocking removed, ADR-004)
 
 ## Current Repo State
 
@@ -26,7 +26,24 @@ Note: the local branch has no upstream tracking configured, so
 
 ## What Changed (most recent first)
 
-1. **Voice narration + menu-only music (2026-06-09, ADR-005).**
+1. **Creative corner modules (2026-06-11, ADR-006).** Four new frontend-only
+   pages, wired into App.tsx routes (all music-free like other modules),
+   home-screen tiles, and Progress-page labels. No backend/schema changes —
+   they log through the existing `POST /api/attempts` (`module` is free text).
+   - `/coloring` — finger-paint canvas over a faded grayscale render of the
+     bundled artwork; palette swatches narrate color names; undo/eraser.
+   - `/tracing` — A–Z / 0–9 / shapes; lenient pixel-coverage check (45% for
+     age ≤ 3, 60% otherwise); success-only, never a failure state.
+   - `/dots` — connect-the-dots; dot positions generated at runtime from the
+     artwork alpha-channel outline (`src/lib/contour.ts`, Moore-neighbour
+     tracing + arc-length resampling, normalised to object-contain geometry
+     so dots overlay the watermark image exactly). 8 dots (age ≤ 3) / 14.
+   - `/match` — memory pairs with a CSS Poké Ball card back; 4 pairs
+     (age ≤ 3) / 8; matched Pokémon names narrated.
+   All four prefetch their TTS audio on mount and follow the ≥88 px
+   touch-target and positive-feedback rules.
+
+2. **Voice narration + menu-only music (2026-06-09, ADR-005).**
    - Backend `GET /api/tts?text&lang=en|es|auto` (`routes/tts.ts`) proxies the
      LAN Qwen3-TTS box (Gradio `run_instruct`; voice **Vivian**) and caches
      wavs on disk. Env: `TTS_URL` (default `http://10.0.100.137:8000`),
@@ -45,7 +62,7 @@ Note: the local branch has no upstream tracking configured, so
    - Verified live against the real box through the proxy: en + es synthesis,
      1.5 ms cached replay, valid 24 kHz PCM wav.
 
-2. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
+3. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
    - GOAL.md §1/§6/§9 no longer require daily limits or a rest screen; the
      release gate now requires sessions run without time-based blocking.
    - Backend: `/api/timer/*` and `PATCH /api/profiles/:id` deleted (requests
@@ -61,13 +78,13 @@ Note: the local branch has no upstream tracking configured, so
    - Docs updated: parent guide, architecture, README, `.claude/agents/*`,
      QA report appendix.
 
-3. **Number-only math for Michael** (`d9a1262`).
+4. **Number-only math for Michael** (`d9a1262`).
    - The split is keyed by profile **age** (`age <= 3` gets picture-based
      visuals), not by name — "Michael" appears nowhere in frontend logic.
    - Age > 3: large numeric equations, bigger answer numerals, large-text word
      problems. Age <= 3 (Leo): unchanged picture-based count/add/subtract.
 
-4. **Default avatars changed** (`33d3608`).
+5. **Default avatars changed** (`33d3608`).
    - Michael: Dracovish `#882`; Leo: Zapdos `#145`.
    - Startup migration in `api-server/src/index.ts` moves old defaults
      (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
@@ -79,11 +96,11 @@ Note: the local branch has no upstream tracking configured, so
      `SPRITE()` helper and its `sprites/pokemon/` path are simply unused by
      the avatar screens.)
 
-5. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
+6. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
    Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
    the generic mountain/ocean GeoScenes).
 
-6. **Security/test work** — API tests cover unauthenticated admin/profile
+7. **Security/test work** — API tests cover unauthenticated admin/profile
    writes failing, removed endpoints returning 404, bearer-token validity, PIN
    rate limiting, CORS, and the TTS proxy (mock Gradio box: synth, disk cache,
    validation, 503 fallback). Local gates last verified 2026-06-09: frontend +

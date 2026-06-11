@@ -30,6 +30,23 @@ Michael's Spanish vocabulary: colors, numbers, greetings, basic phrases.
 Continents, climates (polar/desert/rainforest/ocean), land features, directional concepts.
 Leo gets the concrete visual version; Michael gets the more detailed version.
 
+### Play & Create *(2026-06-11)*
+Four creative activities on the home screen, all offline and all positive-only:
+
+- **Coloring** — pick a Pokémon and finger-paint over a faded outline of its
+  artwork. Tapping a paint color says its name out loud (color vocabulary).
+  Undo, eraser, and brush sizes included; nothing to get "wrong."
+- **Tracing** — trace letters A–Z, numbers 0–9, and shapes with a finger.
+  Leo's profile passes with a gentler tracing check than Michael's. There is
+  no failure state — the app simply celebrates when the tracing is good.
+- **Connect the Dots** — numbered dots in the shape of a Pokémon (made from
+  the artwork itself); tapping them in order draws the outline and reveals
+  the Pokémon. Leo gets 8 dots, Michael 14 — counting practice.
+- **Memory Match** — flip-card pairs. Leo gets 4 pairs, Michael 8. Found
+  Pokémon are named out loud by the voice.
+
+All four record activity on the Progress page.
+
 ---
 
 ## Screen Time

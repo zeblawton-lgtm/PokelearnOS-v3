@@ -8,7 +8,8 @@
 │  ┌───────────────────────────────────────────────────┐  │
 │  │          React Frontend (pokelearnos)             │  │
 │  │                                                   │  │
-│  │  ProfileSelect → Home Hub → [Math|Spanish|Geo]   │  │
+│  │  ProfileSelect → Home Hub → [Math|Spanish|Geo|   │  │
+│  │     Coloring|Tracing|Dots|Match]                  │  │
 │  │  TopBar (top) ───── ParentOverlay (modal)         │  │
 │  └───────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
@@ -48,10 +49,14 @@ App
 │   ├── TopBar (fixed top bar: home + parent lock buttons)
 │   ├── Routes
 │   │   ├── /          → ProfileSelect (loads profiles from API)
-│   │   ├── /home      → Home Hub (3 module tiles + progress)
+│   │   ├── /home      → Home Hub (module + creative tiles + progress)
 │   │   ├── /math      → MathPage (age-branched question pool)
 │   │   ├── /spanish   → SpanishPage (vocabulary questions)
 │   │   ├── /geography → GeographyPage (world knowledge)
+│   │   ├── /coloring  → ColoringPage (canvas painting over artwork)
+│   │   ├── /tracing   → TracingPage (letters/numbers/shapes, ADR-006)
+│   │   ├── /dots      → DotsPage (runtime outline dots via lib/contour.ts)
+│   │   ├── /match     → MatchPage (flip-card pairs)
 │   │   ├── /progress  → Progress (stats from API)
 │   └── ParentOverlay (PIN modal + settings sheet)
 ```

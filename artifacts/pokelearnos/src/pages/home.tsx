@@ -1,12 +1,19 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useSession } from "@/context/SessionContext";
-import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map, Users } from "lucide-react";
+import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map, Users, Palette, Pencil, Share2, Brain } from "lucide-react";
 
 const modules = [
   { id: "math", label: "Math", sublabel: "Count, Add, Subtract", icon: BookOpen, color: "bg-pokemon-red", path: "/math" },
   { id: "spanish", label: "Spanish", sublabel: "Colors, Numbers, Greetings", icon: MessageCircle, color: "bg-pokemon-blue", path: "/spanish" },
   { id: "geography", label: "World Explorer", sublabel: "Regions, climates, maps", icon: Globe, color: "bg-green-500", path: "/geography" },
+];
+
+const creative = [
+  { id: "coloring", label: "Coloring", icon: Palette, color: "bg-pink-500", path: "/coloring" },
+  { id: "tracing", label: "Tracing", icon: Pencil, color: "bg-purple-500", path: "/tracing" },
+  { id: "dots", label: "Connect Dots", icon: Share2, color: "bg-orange-500", path: "/dots" },
+  { id: "match", label: "Memory Match", icon: Brain, color: "bg-teal-500", path: "/match" },
 ];
 
 export default function Home() {
@@ -36,7 +43,7 @@ export default function Home() {
         </div>
       </motion.div>
 
-      <div className="flex flex-col gap-5 flex-1">
+      <div className="flex flex-col gap-4 flex-1">
         {modules.map((mod, i) => {
           const Icon = mod.icon;
           return (
@@ -46,10 +53,10 @@ export default function Home() {
               transition={{ delay: i * 0.1, type: "spring", stiffness: 200 }}
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
               onClick={() => navigate(mod.path)}
-              className={`${mod.color} rounded-3xl p-6 flex items-center gap-6 shadow-lg text-white min-h-[128px]`}
+              className={`${mod.color} rounded-3xl px-6 py-4 flex items-center gap-6 shadow-lg text-white min-h-[110px]`}
             >
-              <div className="w-28 h-28 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                <Icon size={56} className="text-white" />
+              <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Icon size={52} className="text-white" />
               </div>
               <div className="text-left">
                 <p className="text-3xl font-black">{mod.label}</p>
@@ -60,35 +67,54 @@ export default function Home() {
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-5">
+      <div className="grid grid-cols-4 gap-4 mt-4">
+        {creative.map((mod, i) => {
+          const Icon = mod.icon;
+          return (
+            <motion.button
+              key={mod.id}
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.05, type: "spring", stiffness: 200 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(mod.path)}
+              className={`${mod.color} rounded-3xl py-4 flex flex-col items-center justify-center gap-2 shadow-lg text-white min-h-[124px]`}
+            >
+              <Icon size={44} className="text-white" />
+              <span className="text-xl font-black">{mod.label}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mt-4">
         <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           whileTap={{ scale: 0.96 }}
           onClick={() => navigate("/pokedex")}
-          className="bg-pokemon-yellow/90 rounded-3xl py-5 flex flex-col items-center justify-center gap-2 shadow-md min-h-[120px]"
+          className="bg-pokemon-yellow/90 rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
         >
-          <Sparkles size={40} className="text-pokemon-darkred" />
+          <Sparkles size={36} className="text-pokemon-darkred" />
           <span className="text-xl font-black text-pokemon-darkred">Pokédex</span>
         </motion.button>
         <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
           whileTap={{ scale: 0.96 }}
           onClick={() => navigate("/regions")}
-          className="bg-green-400 rounded-3xl py-5 flex flex-col items-center justify-center gap-2 shadow-md min-h-[120px]"
+          className="bg-green-400 rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
         >
-          <Map size={40} className="text-white" />
+          <Map size={36} className="text-white" />
           <span className="text-xl font-black text-white">Regions</span>
         </motion.button>
+        <motion.button
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate("/progress")}
+          className="bg-pokemon-yellow rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
+        >
+          <Trophy size={36} className="text-pokemon-darkred" />
+          <span className="text-xl font-black text-pokemon-darkred">My Progress</span>
+        </motion.button>
       </div>
-
-      <motion.button
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-        onClick={() => navigate("/progress")}
-        className="mt-5 flex items-center justify-center gap-4 bg-pokemon-yellow rounded-3xl py-5 shadow-md min-h-[92px]"
-      >
-        <Trophy size={40} className="text-pokemon-darkred" />
-        <span className="text-2xl font-black text-pokemon-darkred">My Progress</span>
-      </motion.button>
     </div>
   );
 }

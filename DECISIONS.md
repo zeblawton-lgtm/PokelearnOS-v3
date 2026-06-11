@@ -72,3 +72,24 @@ Pokédex names, habitat blurbs; module audio is prefetched at module start.
 The music `learn` scene was removed — background music plays on menu screens
 only; module completion keeps the fanfare + jingle (explicitly stopped on the
 next scene/module, since the completion tracks are full-length songs).
+
+## ADR-006 — Creative corner modules (2026-06-11)
+**Context:** The parent asked for more creative/educational activities beyond
+the question-bank modules: coloring Pokémon, drawing/tracing, connect the
+dots, and similar age-appropriate play.
+
+**Decision:** Four new frontend-only modules, no backend or schema changes
+(`attempts.module` is free text, so they log progress through the existing
+`POST /api/attempts` flow): **Coloring** (`/coloring` — finger-paint on a
+canvas over a faded grayscale render of the bundled official artwork; palette
+swatches narrate color names), **Tracing** (`/tracing` — letters A–Z, numbers
+0–9, and shapes traced with a finger; lenient pixel-coverage check, success
+only, never a failure state), **Connect the Dots** (`/dots` — numbered dots
+are generated at runtime by tracing the alpha-channel outline of bundled
+artwork in `src/lib/contour.ts`, so any bundled Pokémon works with zero new
+assets; completing the loop reveals the artwork), and **Memory Match**
+(`/match` — flip-card pairs of bundled artwork). Difficulty keys off
+`profile.age` like math (age ≤ 3 gets fewer dots/pairs and looser tracing).
+All four follow the kiosk rules: offline-only bundled assets, ≥88 px touch
+targets, positive feedback only, narration via the ADR-005 TTS path with
+prefetch, music stays menu-only with the completion fanfare/jingle.
