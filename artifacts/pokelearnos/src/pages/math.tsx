@@ -3,6 +3,12 @@ import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
 import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
 import { spokenText } from "@/lib/pronounce";
+import {
+  POKEMON_POOL,
+  getSpokenQuestion,
+  getSpokenExplanation,
+  type AnyQuestion,
+} from "@/lib/spoken-math";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
@@ -12,29 +18,6 @@ import { math3YoQuestions, type Math3YoQuestion } from "@/content/math-3yo";
 import { math5YoQuestions, type Math5YoQuestion } from "@/content/math-5yo";
 
 const SPRITE = ARTWORK;
-
-const POKEMON_POOL = [
-  { id: 25, name: "Pikachu" },
-  { id: 39, name: "Jigglypuff" },
-  { id: 133, name: "Eevee" },
-  { id: 175, name: "Togepi" },
-  { id: 54, name: "Psyduck" },
-  { id: 7, name: "Squirtle" },
-  { id: 1, name: "Bulbasaur" },
-  { id: 4, name: "Charmander" },
-  { id: 52, name: "Meowth" },
-  { id: 143, name: "Snorlax" },
-  { id: 35, name: "Clefairy" },
-  { id: 79, name: "Slowpoke" },
-  { id: 172, name: "Pichu" },
-  { id: 37, name: "Vulpix" },
-  { id: 113, name: "Chansey" },
-  { id: 58, name: "Growlithe" },
-  { id: 92, name: "Gastly" },
-  { id: 60, name: "Poliwag" },
-];
-
-type AnyQuestion = Math3YoQuestion | Math5YoQuestion;
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -256,33 +239,6 @@ function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string 
   } else {
     return "";
   }
-}
-
-// Spoken (TTS) version of each question — symbols verbalised for the voice.
-function getSpokenQuestion(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
-  const q3 = q as Math3YoQuestion;
-  const q5 = q as Math5YoQuestion;
-
-  if (is3yo) {
-    if (q3.type === "count") return `How many ${pokemonName} do you see? Count them!`;
-    if (q3.type === "add") return `${q3.a} ${pokemonName} plus ${q3.b} ${pokemonName}. How many altogether?`;
-    return `${q3.a} ${pokemonName}, take away ${q3.b}. How many are left?`;
-  }
-  if (q5.type === "word") return q5.wordProblem ?? "";
-  if (q5.type === "add") return `What is ${q.a} plus ${q.b}?`;
-  if (q5.type === "subtract") return `What is ${q.a} minus ${q.b}?`;
-  return `What is ${q5.a} times ${q5.b}?`;
-}
-
-// Spoken version of the wrong-answer explanation.
-function getSpokenExplanation(q: AnyQuestion): string {
-  const q3 = q as Math3YoQuestion;
-  const q5 = q as Math5YoQuestion;
-  if (q3.type === "count") return `Count them one by one — there are ${q.answer}.`;
-  if (q3.type === "add" || q5.type === "add") return `${q.a} plus ${q.b} equals ${q.answer}.`;
-  if (q3.type === "subtract" || q5.type === "subtract") return `${q.a} minus ${q.b} equals ${q.answer}.`;
-  if (q5.type === "multiply") return `${q5.a} times ${q5.b} equals ${q.answer}.`;
-  return `The answer is ${q.answer}.`;
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────

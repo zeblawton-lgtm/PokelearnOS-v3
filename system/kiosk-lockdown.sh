@@ -16,7 +16,7 @@
 #   Step 6:  Remove desktop entries that should not appear
 #   Step 7:  Mask TTY gettys tty2–tty6 (TTY switching blocked)
 #   Step 8:  Install polkit rules (50-kids.rules)
-#   Step 9:  Configure iio-sensor-proxy to lock orientation to landscape
+#   Step 9:  Ensure screen auto-rotation stays enabled (tent/tablet mode)
 #   Step 10: Disable Bluetooth (not needed for kiosk)
 #   Step 11: Mask systemd sleep/suspend/hibernate targets
 #   Step 12: Configure logind — ignore lid close and power button
@@ -304,19 +304,23 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 9 — Lock screen orientation to landscape (iio-sensor-proxy)
+# Step 9 — Keep screen auto-rotation enabled (tent/tablet mode)
 # ---------------------------------------------------------------------------
-step "9: Lock orientation to landscape"
+step "9: Keep auto-rotation enabled (tent mode)"
 
-# The 7306 is a 2-in-1 — auto-rotation can flip the kiosk screen in tablet mode.
-# We disable auto-rotation via the system dconf db from step 3.
+# The 7306 is a 2-in-1 used in tent mode — the screen MUST auto-rotate when
+# the laptop is folded (iio-sensor-proxy + GNOME handle it). An earlier
+# revision locked orientation to stop tablet-mode flipping, which broke tent
+# mode the moment the dconf fix made this script effective. Write the key
+# explicitly as false so re-running the script repairs laptops that got the
+# old `true` value.
 ORIENTATION_KEYFILE="${DCONF_DB_DIR}/03-orientation"
 cat > "${ORIENTATION_KEYFILE}" << 'ORI_EOF'
 [org/gnome/settings-daemon/peripherals/touchscreen]
-orientation-lock=true
+orientation-lock=false
 ORI_EOF
 
-ok "Screen orientation locked to landscape."
+ok "Screen auto-rotation enabled (tent/tablet mode supported)."
 
 # Compile every system dconf keyfile written above (steps 3, 4, 5, 9) into
 # the binary database GNOME reads. Running sessions pick the changes up

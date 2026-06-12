@@ -203,3 +203,52 @@ test("GET /tts returns 503 when the TTS box is unreachable", async () => {
   mock.listen(mockPort, "127.0.0.1");
   await once(mock, "listening");
 });
+
+test("upgrade queue processes multiple legacy-wav entries sequentially", async () => {
+  resetTtsRuntimeState();
+  promptEnabled = true;
+
+  const cacheDir = process.env["TTS_CACHE_DIR"]!;
+  const TTS_VOICE_LOCAL = process.env["TTS_VOICE"] ?? "Vivian";
+  const CLONE_VOICE_LOCAL = "clone";
+
+  // Write two wav-only cache entries directly so the route treats them as
+  // legacy-Vivian phrases that need upgrading.
+  const phrase1 = "queue test alpha";
+  const phrase2 = "queue test beta";
+  const lang = "en";
+
+  const wav1 = path.join(cacheDir, `${ttsCacheKey(phrase1, lang, TTS_VOICE_LOCAL)}.wav`);
+  const wav2 = path.join(cacheDir, `${ttsCacheKey(phrase2, lang, TTS_VOICE_LOCAL)}.wav`);
+  const mp3_1 = path.join(cacheDir, `${ttsCacheKey(phrase1, lang, CLONE_VOICE_LOCAL)}.mp3`);
+  const mp3_2 = path.join(cacheDir, `${ttsCacheKey(phrase2, lang, CLONE_VOICE_LOCAL)}.mp3`);
+
+  // Ensure mp3s are absent, wavs are present.
+  if (fs.existsSync(mp3_1)) fs.unlinkSync(mp3_1);
+  if (fs.existsSync(mp3_2)) fs.unlinkSync(mp3_2);
+  fs.mkdirSync(cacheDir, { recursive: true });
+  fs.writeFileSync(wav1, WAV);
+  fs.writeFileSync(wav2, WAV);
+
+  const promptCallsBefore = promptCalls;
+
+  // Request both phrases — each should return the wav instantly and enqueue
+  // a background upgrade.
+  const res1 = await fetch(`${baseUrl}/tts?text=${encodeURIComponent(phrase1)}&lang=${lang}`);
+  assert.equal(res1.status, 200);
+  assert.ok(res1.headers.get("content-type")?.includes("audio/wav"), "phrase1 should be served as wav");
+
+  const res2 = await fetch(`${baseUrl}/tts?text=${encodeURIComponent(phrase2)}&lang=${lang}`);
+  assert.equal(res2.status, 200);
+  assert.ok(res2.headers.get("content-type")?.includes("audio/wav"), "phrase2 should be served as wav");
+
+  // Poll until both mp3 files appear on disk (the queue drains in the
+  // background after the requests finish, one entry at a time).
+  for (let i = 0; i < 200 && (!fs.existsSync(mp3_1) || !fs.existsSync(mp3_2)); i++) {
+    await new Promise((r) => setTimeout(r, 10));
+  }
+
+  assert.ok(fs.existsSync(mp3_1), "mp3 for phrase1 should exist after queue drains");
+  assert.ok(fs.existsSync(mp3_2), "mp3 for phrase2 should exist after queue drains");
+  assert.equal(promptCalls, promptCallsBefore + 2, "prompt endpoint should have been called twice");
+});

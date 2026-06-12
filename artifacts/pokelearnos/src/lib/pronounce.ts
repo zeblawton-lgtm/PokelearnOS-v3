@@ -8,7 +8,9 @@
 // real name. Unmapped names (incl. Gens 6–9, which the guide doesn't cover)
 // pass through unchanged.
 // ---------------------------------------------------------------------------
-import { PRONUNCIATIONS } from "@/content/pronunciations";
+// Relative import (not "@/") so Node tooling like scripts/warm-tts.ts can
+// load this module without tsconfig path-alias resolution.
+import { PRONUNCIATIONS } from "../content/pronunciations";
 
 let pattern: RegExp | null = null;
 

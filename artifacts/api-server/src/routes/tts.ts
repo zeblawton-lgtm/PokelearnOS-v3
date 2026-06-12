@@ -109,12 +109,6 @@ async function synthesize(text: string, lang: string): Promise<Buffer> {
 // connection failed) instead of paying its timeout on every utterance.
 let promptDownUntil = 0;
 
-/** Test hook: clear negative caching and in-flight state between cases. */
-export function resetTtsRuntimeState() {
-  promptDownUntil = 0;
-  inFlight.clear();
-}
-
 async function synthesizeViaPromptCache(text: string, lang: string): Promise<Buffer> {
   const signal = AbortSignal.timeout(PROMPT_TIMEOUT_MS);
 
@@ -155,18 +149,57 @@ function writeCache(file: string, audio: Buffer) {
   fs.renameSync(tmp, file);
 }
 
-// Re-synthesize a legacy-Vivian phrase with the cloned voice in the
-// background so it upgrades for next time. One at a time — voice_clone.py
-// loads the model per call, so the box must not be flooded.
+// ---------------------------------------------------------------------------
+// Pending-upgrade queue: re-synthesize legacy Vivian wavs with the cloned
+// voice in the background, but only when there are no foreground requests
+// in flight. This ensures background work never slows down a waiting child.
+// ---------------------------------------------------------------------------
+
+const UPGRADE_QUEUE_MAX = 500;
+
+interface UpgradeEntry {
+  text: string;
+  lang: string;
+  mp3File: string;
+}
+
+// Map keyed by `${lang}\n${text}` to avoid duplicate entries.
+const upgradeQueue = new Map<string, UpgradeEntry>();
 let upgradeBusy = false;
-function scheduleVoiceUpgrade(text: string, lang: string, mp3File: string, log: Logger) {
-  if (upgradeBusy || Date.now() < promptDownUntil) return;
+
+function scheduleVoiceUpgrade(text: string, lang: string, mp3File: string, _log: Logger) {
+  if (upgradeQueue.size >= UPGRADE_QUEUE_MAX) return;
+  const key = `${lang}\n${text}`;
+  if (!upgradeQueue.has(key)) {
+    upgradeQueue.set(key, { text, lang, mp3File });
+  }
+  drainUpgrades(_log);
+}
+
+function drainUpgrades(log: Logger) {
+  // Yield to foreground: don't run if requests are in flight.
+  if (upgradeBusy || inFlight.size > 0) return;
+  if (upgradeQueue.size === 0) return;
+  // If the prompt endpoint is currently negative-cached, leave the queue
+  // intact — a later drain trigger (after the window expires) will process it.
+  if (Date.now() < promptDownUntil) return;
+
+  const [key, entry] = upgradeQueue.entries().next().value as [string, UpgradeEntry];
+  upgradeQueue.delete(key);
+
+  // Skip if the mp3 was already written by a concurrent foreground synthesis.
+  if (fs.existsSync(entry.mp3File)) {
+    drainUpgrades(log);
+    return;
+  }
+
   upgradeBusy = true;
-  synthesizeViaPromptCache(text, lang)
-    .then((audio) => writeCache(mp3File, audio))
+  synthesizeViaPromptCache(entry.text, entry.lang)
+    .then((audio) => writeCache(entry.mp3File, audio))
     .catch((err: unknown) => log.debug({ err }, "voice upgrade skipped"))
     .finally(() => {
       upgradeBusy = false;
+      drainUpgrades(log);
     });
 }
 
@@ -210,6 +243,14 @@ async function obtain(text: string, lang: string, log: Logger): Promise<TtsResul
 // Collapse concurrent requests for the same utterance into one synthesis.
 const inFlight = new Map<string, Promise<TtsResult>>();
 
+/** Test hook: clear negative caching, in-flight state, and upgrade queue between cases. */
+export function resetTtsRuntimeState() {
+  promptDownUntil = 0;
+  inFlight.clear();
+  upgradeQueue.clear();
+  upgradeBusy = false;
+}
+
 router.get("/tts", async (req, res) => {
   const text = String(req.query["text"] ?? "").trim();
   const lang = String(req.query["lang"] ?? "en");
@@ -223,10 +264,14 @@ router.get("/tts", async (req, res) => {
   }
 
   const flightKey = `${lang}\n${text}`;
+  const log = req.log;
   try {
     let pending = inFlight.get(flightKey);
     if (!pending) {
-      pending = obtain(text, lang, req.log).finally(() => inFlight.delete(flightKey));
+      pending = obtain(text, lang, log).finally(() => {
+        inFlight.delete(flightKey);
+        drainUpgrades(log);
+      });
       inFlight.set(flightKey, pending);
     }
     const { audio, contentType } = await pending;
@@ -235,7 +280,7 @@ router.get("/tts", async (req, res) => {
       .set("Cache-Control", "public, max-age=31536000, immutable")
       .send(audio);
   } catch (err) {
-    req.log.warn({ err }, "TTS unavailable");
+    log.warn({ err }, "TTS unavailable");
     res.status(503).json({ error: "TTS unavailable" });
   }
 });
