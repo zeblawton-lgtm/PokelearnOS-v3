@@ -8,6 +8,7 @@
 // mute toggle.
 // ---------------------------------------------------------------------------
 import { isMuted, speak as speakFallback } from "@/lib/sound";
+import { setSpeechDucking } from "@/lib/music";
 
 export type SpeechLang = "en" | "es" | "auto";
 
@@ -22,6 +23,34 @@ const pending = new Map<string, Promise<string>>(); // in-flight dedup
 
 let el: HTMLAudioElement | null = null;
 let generation = 0;
+
+// The TTS clips come out quiet while the bundled music is mastered loud, so
+// narration is routed through a Web Audio gain stage (with a compressor to
+// catch clipping). An <audio> element alone caps at volume 1.0.
+const VOICE_GAIN = 1.8;
+let boostCtx: AudioContext | null = null;
+
+function routeThroughBooster(audio: HTMLAudioElement) {
+  if (boostCtx) {
+    if (boostCtx.state === "suspended") void boostCtx.resume().catch(() => {});
+    return;
+  }
+  try {
+    boostCtx = new AudioContext();
+    const source = boostCtx.createMediaElementSource(audio);
+    const gain = boostCtx.createGain();
+    gain.gain.value = VOICE_GAIN;
+    const compressor = boostCtx.createDynamicsCompressor();
+    source.connect(gain);
+    gain.connect(compressor);
+    compressor.connect(boostCtx.destination);
+    if (boostCtx.state === "suspended") void boostCtx.resume().catch(() => {});
+  } catch {
+    // Booster is best-effort; plain element output keeps working if the
+    // context can't be created.
+    boostCtx = null;
+  }
+}
 
 function fallbackLang(lang: SpeechLang): string {
   return lang === "es" ? "es-ES" : "en-US";
@@ -72,6 +101,7 @@ export async function prefetch(parts: Utterance[]): Promise<void> {
 
 function playUrl(url: string): Promise<void> {
   if (!el) el = new Audio();
+  routeThroughBooster(el);
   const audio = el;
   audio.src = url;
   audio.currentTime = 0;
@@ -86,6 +116,7 @@ function playUrl(url: string): Promise<void> {
 // Cancel any current and queued narration.
 export function stopSpeaking() {
   generation += 1;
+  setSpeechDucking(false);
   if (el) {
     el.onended = null;
     el.pause();
@@ -105,18 +136,26 @@ export async function speakSequence(parts: Utterance[]): Promise<void> {
   stopSpeaking();
   const gen = generation;
 
-  for (const part of parts) {
-    const text = part.text.trim();
-    if (!text || gen !== generation) return;
-    try {
-      const url = await fetchUtterance(text, part.lang);
-      if (gen !== generation) return;
-      await playUrl(url);
-    } catch {
-      if (gen !== generation) return;
-      // Degraded mode: offline robot voice (fire-and-forget, no sequencing).
-      speakFallback(text, fallbackLang(part.lang));
+  // Pull the background music down while the voice speaks (menus narrate on
+  // the Pokédex/Regions screens). Released when the sequence finishes; a
+  // newer sequence/stop owns the duck state after a generation bump.
+  setSpeechDucking(true);
+  try {
+    for (const part of parts) {
+      const text = part.text.trim();
+      if (!text || gen !== generation) return;
+      try {
+        const url = await fetchUtterance(text, part.lang);
+        if (gen !== generation) return;
+        await playUrl(url);
+      } catch {
+        if (gen !== generation) return;
+        // Degraded mode: offline robot voice (fire-and-forget, no sequencing).
+        speakFallback(text, fallbackLang(part.lang));
+      }
     }
+  } finally {
+    if (gen === generation) setSpeechDucking(false);
   }
 }
 

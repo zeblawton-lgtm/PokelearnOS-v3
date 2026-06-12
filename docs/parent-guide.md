@@ -74,7 +74,9 @@ in `/opt/pokelearnos/.env` if it moves.
 
 Background music plays only on the menu screens and the end-of-module
 celebration — questions are music-free so the voice is easy to hear. The
-parent panel's sound toggle mutes narration too.
+voice is boosted above the music, and the music automatically gets much
+quieter whenever the voice is speaking. The parent panel's sound toggle
+mutes narration too.
 
 ---
 

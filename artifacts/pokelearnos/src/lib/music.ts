@@ -31,8 +31,30 @@ let jingle: HTMLAudioElement | null = null;
 let scene: Scene | null = null;
 let playlist: string[] = [];
 let idx = 0;
-let volume = 0.32;
+// Keep music well under the narration: the bundled tracks are mastered loud
+// while the TTS clips are quiet.
+let volume = 0.2;
 let muted = readMuted();
+
+// Ducking state: the jingle and active narration each pull the background
+// music down further. Recomputed by applyBgVolume().
+let jingleDucking = false;
+let speechDucking = false;
+
+function applyBgVolume() {
+  if (!bg) return;
+  let v = volume;
+  if (jingleDucking) v *= 0.4;
+  if (speechDucking) v *= 0.25;
+  bg.volume = v;
+}
+
+// Called by lib/tts.ts while narration is playing so the voice always sits
+// on top of the music.
+export function setSpeechDucking(active: boolean) {
+  speechDucking = active;
+  applyBgVolume();
+}
 
 function readMuted(): boolean {
   try {
@@ -54,8 +76,8 @@ function bgEl(): HTMLAudioElement {
   if (!bg) {
     bg = new Audio();
     bg.preload = "auto";
-    bg.volume = volume;
     bg.addEventListener("ended", playNext);
+    applyBgVolume();
   }
   return bg;
 }
@@ -77,7 +99,8 @@ function stopJingle() {
     jingle.pause();
     jingle.currentTime = 0;
   }
-  if (bg) bg.volume = volume; // un-duck
+  jingleDucking = false;
+  applyBgVolume(); // un-duck
 }
 
 // Switch background music to a scene's playlist. Idempotent per scene.
@@ -104,10 +127,12 @@ export function playJingle(name: "results" | "result-display" = "result-display"
     jingle = new Audio();
     jingle.volume = Math.min(1, volume + 0.25);
     jingle.addEventListener("ended", () => {
-      if (bg) bg.volume = volume;
+      jingleDucking = false;
+      applyBgVolume();
     });
   }
-  if (bg) bg.volume = volume * 0.4; // duck
+  jingleDucking = true;
+  applyBgVolume(); // duck
   jingle.src = track(name);
   jingle.currentTime = 0;
   void jingle.play().catch(() => {});
@@ -143,5 +168,5 @@ export function isMusicMuted(): boolean {
 
 export function setVolume(v: number) {
   volume = Math.max(0, Math.min(1, v));
-  if (bg) bg.volume = volume;
+  applyBgVolume();
 }
