@@ -26,7 +26,21 @@ Note: the local branch has no upstream tracking configured, so
 
 ## What Changed (most recent first)
 
-1. **TTS speed + tent-mode rotation (2026-06-12).**
+1. **Home page redesigned + voice-over-music balance (2026-06-12, later).**
+   - `home.tsx` rebuilt in the style of the owner's mockup: sky-gradient
+     backdrop with drifting CSS clouds, the child's own avatar bouncing next
+     to a "Hi, {name}!" speech bubble, three Pokémon "type cards" for the
+     subjects (Charmander/fire = Math, Squirtle/water = Spanish,
+     Bulbasaur/grass = World), and a chunky white emoji fun-row (creative
+     corner + Pokédex/Regions/gold Progress). All assets bundled (no web
+     fonts/sprites); touch targets ≥ 88 px kept. The mockup's Poké-ball
+     reward meter / catch-reveal flow was deliberately NOT built (new game
+     economy — needs an owner decision + ADR if wanted).
+   - Audio balance: narration routes through a Web Audio gain stage
+     (1.8× + compressor) in `lib/tts.ts`; music default 0.32→0.2 and ducks
+     to ¼ while speech plays (`setSpeechDucking` in `lib/music.ts`).
+
+2. **TTS speed + tent-mode rotation (2026-06-12).**
    - *Box*: `/tts/prompt` synthesis dropped ~36 s → **2.3 s** per new phrase.
      A resident-model sidecar (`app/server/tts_sidecar.py` on the ML box,
      loopback 127.0.0.1:8766, qwen3-tts-env, model loaded once + speaker
@@ -49,7 +63,7 @@ Note: the local branch has no upstream tracking configured, so
      tent mode the moment the dconf fix made lockdown effective. Laptops
      need a lockdown re-run to repair.
 
-2. **Kiosk proxy prefers the box's /tts/prompt cache, ADR-007 (2026-06-11).**
+3. **Kiosk proxy prefers the box's /tts/prompt cache, ADR-007 (2026-06-11).**
    The owner is adding `POST /tts/prompt` on the ML box (returns a cached or
    freshly synthesized MP3 path in a voice-cloned speaker; a codex agent was
    implementing it box-side — it did NOT exist on any port when checked).
@@ -62,7 +76,7 @@ Note: the local branch has no upstream tracking configured, so
    endpoint lands on the Gradio origin; else set `TTS_PROMPT_URL` in
    `/opt/pokelearnos/.env` on the laptops.
 
-3. **Pokémon name pronunciation + Memory Match replay music leak (2026-06-11).**
+4. **Pokémon name pronunciation + Memory Match replay music leak (2026-06-11).**
    - `src/content/pronunciations.ts` (535 entries, Gens 1-5) maps names to
      TTS-friendly respellings, sourced from Smogon's official pronunciation
      guide; `src/lib/pronounce.ts` exposes `spokenName()` / `spokenText()`.
@@ -74,7 +88,7 @@ Note: the local branch has no upstream tracking configured, so
      route, so App's route effect never fired and the full-length completion
      song kept playing through the next game.
 
-4. **Lock-screen lockout fixed in kiosk-lockdown.sh (2026-06-11).** The
+5. **Lock-screen lockout fixed in kiosk-lockdown.sh (2026-06-11).** The
    script's dconf steps (3/4/5/9) wrote *text keyfiles into
    `/home/kids/.config/dconf/`*, which dconf never reads — so screen-lock
    disable, idle-delay=0, shortcut blocking, and orientation lock were all
@@ -88,7 +102,7 @@ Note: the local branch has no upstream tracking configured, so
    each laptop** (then reboot) — `update.sh` only rsyncs files, it does not
    execute the lockdown script.
 
-5. **Creative corner modules (2026-06-11, ADR-006).** Four new frontend-only
+6. **Creative corner modules (2026-06-11, ADR-006).** Four new frontend-only
    pages, wired into App.tsx routes (all music-free like other modules),
    home-screen tiles, and Progress-page labels. No backend/schema changes —
    they log through the existing `POST /api/attempts` (`module` is free text).
@@ -105,7 +119,7 @@ Note: the local branch has no upstream tracking configured, so
    All four prefetch their TTS audio on mount and follow the ≥88 px
    touch-target and positive-feedback rules.
 
-6. **Voice narration + menu-only music (2026-06-09, ADR-005).**
+7. **Voice narration + menu-only music (2026-06-09, ADR-005).**
    - Backend `GET /api/tts?text&lang=en|es|auto` (`routes/tts.ts`) proxies the
      LAN Qwen3-TTS box (Gradio `run_instruct`; voice **Vivian**) and caches
      wavs on disk. Env: `TTS_URL` (default `http://10.0.100.137:8000`),
@@ -124,7 +138,7 @@ Note: the local branch has no upstream tracking configured, so
    - Verified live against the real box through the proxy: en + es synthesis,
      1.5 ms cached replay, valid 24 kHz PCM wav.
 
-7. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
+8. **Time-based blocking removed end-to-end (2026-06-09, ADR-004).**
    - GOAL.md §1/§6/§9 no longer require daily limits or a rest screen; the
      release gate now requires sessions run without time-based blocking.
    - Backend: `/api/timer/*` and `PATCH /api/profiles/:id` deleted (requests
@@ -140,13 +154,13 @@ Note: the local branch has no upstream tracking configured, so
    - Docs updated: parent guide, architecture, README, `.claude/agents/*`,
      QA report appendix.
 
-8. **Number-only math for Michael** (`d9a1262`).
+9. **Number-only math for Michael** (`d9a1262`).
    - The split is keyed by profile **age** (`age <= 3` gets picture-based
      visuals), not by name — "Michael" appears nowhere in frontend logic.
    - Age > 3: large numeric equations, bigger answer numerals, large-text word
      problems. Age <= 3 (Leo): unchanged picture-based count/add/subtract.
 
-9. **Default avatars changed** (`33d3608`).
+10. **Default avatars changed** (`33d3608`).
    - Michael: Dracovish `#882`; Leo: Zapdos `#145`.
    - Startup migration in `api-server/src/index.ts` moves old defaults
      (25/448 → 882 for Michael, 39/778 → 145 for Leo). Verified applied on both
@@ -158,11 +172,11 @@ Note: the local branch has no upstream tracking configured, so
      `SPRITE()` helper and its `sprites/pokemon/` path are simply unused by
      the avatar screens.)
 
-10. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
+11. **Pokédex/habitat support extended** — Zapdos (stormy mountain sky) and
    Dracovish (rocky ocean shore) in `src/lib/pokemonHabitat.ts` (rendered with
    the generic mountain/ocean GeoScenes).
 
-11. **Security/test work** — API tests cover unauthenticated admin/profile
+12. **Security/test work** — API tests cover unauthenticated admin/profile
    writes failing, removed endpoints returning 404, bearer-token validity, PIN
    rate limiting, CORS, and the TTS proxy (mock Gradio box: synth, disk cache,
    validation, 503 fallback). Local gates last verified 2026-06-09: frontend +

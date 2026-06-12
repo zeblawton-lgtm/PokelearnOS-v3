@@ -1,20 +1,59 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { useSession } from "@/context/SessionContext";
-import { BookOpen, Globe, MessageCircle, Trophy, Sparkles, Map, Users, Palette, Pencil, Share2, Brain } from "lucide-react";
+import { ARTWORK, onSpriteError } from "@/lib/sprites";
+import { playTap } from "@/lib/sound";
+import { Users } from "lucide-react";
 
-const modules = [
-  { id: "math", label: "Math", sublabel: "Count, Add, Subtract", icon: BookOpen, color: "bg-pokemon-red", path: "/math" },
-  { id: "spanish", label: "Spanish", sublabel: "Colors, Numbers, Greetings", icon: MessageCircle, color: "bg-pokemon-blue", path: "/spanish" },
-  { id: "geography", label: "World Explorer", sublabel: "Regions, climates, maps", icon: Globe, color: "bg-green-500", path: "/geography" },
+const SPRITE = ARTWORK;
+
+// Big "type card" subjects — each learning module is fronted by a starter
+// Pokémon and styled like its type (kid-recognizable, pre-reader friendly).
+const subjects = [
+  {
+    id: "math", label: "Math", typePill: "🔥 Fire Type", pokemonId: 4, path: "/math",
+    gradient: "linear-gradient(160deg,#ff7c45,#e85d2a)", shadow: "0 8px 0 #c44a1d",
+  },
+  {
+    id: "spanish", label: "Spanish", typePill: "💧 Water Type", pokemonId: 7, path: "/spanish",
+    gradient: "linear-gradient(160deg,#4aa8ff,#2b86e0)", shadow: "0 8px 0 #1e6bbd",
+  },
+  {
+    id: "geography", label: "World", typePill: "🌿 Grass Type", pokemonId: 1, path: "/geography",
+    gradient: "linear-gradient(160deg,#52c46a,#36a350)", shadow: "0 8px 0 #27843e",
+  },
 ];
 
-const creative = [
-  { id: "coloring", label: "Coloring", icon: Palette, color: "bg-pink-500", path: "/coloring" },
-  { id: "tracing", label: "Tracing", icon: Pencil, color: "bg-purple-500", path: "/tracing" },
-  { id: "dots", label: "Connect Dots", icon: Share2, color: "bg-orange-500", path: "/dots" },
-  { id: "match", label: "Memory Match", icon: Brain, color: "bg-teal-500", path: "/match" },
+const fun = [
+  { id: "coloring", label: "Coloring", emoji: "🎨", path: "/coloring", gold: false },
+  { id: "tracing", label: "Tracing", emoji: "✏️", path: "/tracing", gold: false },
+  { id: "dots", label: "Dots", emoji: "🔵", path: "/dots", gold: false },
+  { id: "match", label: "Memory", emoji: "🧠", path: "/match", gold: false },
+  { id: "pokedex", label: "Pokédex", emoji: "📕", path: "/pokedex", gold: false },
+  { id: "regions", label: "Regions", emoji: "🗺️", path: "/regions", gold: false },
+  { id: "progress", label: "Progress", emoji: "🏆", path: "/progress", gold: true },
 ];
+
+// A soft cartoon cloud drifting across the sky. Built from plain divs so it
+// needs no assets; starts off-screen left and loops.
+function Cloud({ top, duration, delay, scale }: { top: string; duration: number; delay: number; scale: number }) {
+  return (
+    <motion.div
+      aria-hidden
+      className="absolute pointer-events-none opacity-80"
+      style={{ top, left: 0, scale }}
+      initial={{ x: "-180px" }}
+      animate={{ x: "105vw" }}
+      transition={{ repeat: Infinity, duration, delay, ease: "linear" }}
+    >
+      <div className="relative">
+        <div className="w-36 h-11 bg-white rounded-full" />
+        <div className="absolute w-14 h-14 bg-white rounded-full -top-7 left-6" />
+        <div className="absolute w-11 h-11 bg-white rounded-full -top-4 left-16" />
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const { profile, endSession } = useSession();
@@ -22,98 +61,106 @@ export default function Home() {
 
   // Ending the session drops profile to null, so the app returns to the
   // profile picker — that's where Leo/Michael switch who's playing.
-  const handleSwitchPlayer = () => { void endSession(); };
+  const handleSwitchPlayer = () => { playTap(); void endSession(); };
+
+  const go = (path: string) => { playTap(); navigate(path); };
 
   return (
-    <div className="flex flex-col h-full px-6 py-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+    <div className="relative flex flex-col h-full px-6 py-3 overflow-hidden">
+      {/* Sky backdrop + drifting clouds (fixed so it sits under the TopBar too) */}
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10"
+        style={{ background: "linear-gradient(180deg,#8ed4ff 0%,#c8ecff 55%,#d8f5cf 100%)" }}
+      />
+      <Cloud top="9%" duration={65} delay={0} scale={1} />
+      <Cloud top="20%" duration={90} delay={12} scale={0.7} />
+
+      {/* Greeting: the child's own avatar bounces next to a speech bubble */}
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-5 mt-1 mb-2"
+      >
+        <motion.img
+          src={SPRITE(profile?.avatarPokemonId ?? 25)}
+          onError={onSpriteError}
+          alt=""
+          className="w-28 h-28 object-contain drop-shadow-xl"
+          animate={{ y: [0, -12, 0] }}
+          transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+          draggable={false}
+        />
+        <div className="relative bg-white rounded-3xl px-7 py-4" style={{ boxShadow: "0 5px 0 rgba(0,0,0,0.08)" }}>
+          <div aria-hidden className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rotate-45" />
+          <h1 className="text-4xl font-black text-gray-800 leading-tight">Hi, {profile?.name}!</h1>
+          <p className="text-lg font-bold text-gray-500">Tap a friend to start learning</p>
+        </div>
+
         <button
           onClick={handleSwitchPlayer}
-          className="absolute top-20 right-5 inline-flex items-center gap-2 bg-white border-2 border-gray-200 rounded-2xl px-4 py-2 shadow-sm"
+          className="ml-auto flex items-center gap-2 bg-white rounded-2xl px-5 h-16"
+          style={{ boxShadow: "0 5px 0 rgba(0,0,0,0.08)" }}
         >
-          <Users size={31} className="text-pokemon-blue" />
+          <Users size={28} className="text-pokemon-blue" />
           <span className="text-base font-black text-gray-700">Switch Player</span>
         </button>
-        <h1 className="text-4xl font-black text-pokemon-red">Hi, {profile?.name}!</h1>
-        <p className="text-xl text-gray-600 mt-1 font-bold">What do you want to learn today?</p>
-        <div className="inline-flex items-center gap-2 bg-pokemon-yellow/20 rounded-2xl px-5 py-2 mt-3">
-          <span className="text-2xl font-black text-pokemon-darkred">
-            No time limit
-          </span>
-        </div>
       </motion.div>
 
-      <div className="flex flex-col gap-4 flex-1">
-        {modules.map((mod, i) => {
-          const Icon = mod.icon;
-          return (
+      {/* Subject type cards — artwork intentionally overflows the card top */}
+      <div className="flex-1 flex items-center justify-center min-h-0">
+        <div className="flex gap-8 justify-center items-stretch w-full max-w-5xl mt-10">
+          {subjects.map((s, i) => (
             <motion.button
-              key={mod.id}
-              initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1, type: "spring", stiffness: 200 }}
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-              onClick={() => navigate(mod.path)}
-              className={`${mod.color} rounded-3xl px-6 py-4 flex items-center gap-6 shadow-lg text-white min-h-[110px]`}
-            >
-              <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                <Icon size={52} className="text-white" />
-              </div>
-              <div className="text-left">
-                <p className="text-3xl font-black">{mod.label}</p>
-                <p className="text-lg font-bold text-white/80">{mod.sublabel}</p>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-cols-4 gap-4 mt-4">
-        {creative.map((mod, i) => {
-          const Icon = mod.icon;
-          return (
-            <motion.button
-              key={mod.id}
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.05, type: "spring", stiffness: 200 }}
+              key={s.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, type: "spring", stiffness: 200 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(mod.path)}
-              className={`${mod.color} rounded-3xl py-4 flex flex-col items-center justify-center gap-2 shadow-lg text-white min-h-[124px]`}
+              onClick={() => go(s.path)}
+              className="flex-1 max-w-[340px] rounded-[30px] px-4 pb-6 text-white flex flex-col items-center gap-2"
+              style={{ background: s.gradient, boxShadow: s.shadow }}
             >
-              <Icon size={44} className="text-white" />
-              <span className="text-xl font-black">{mod.label}</span>
+              <motion.img
+                src={SPRITE(s.pokemonId)}
+                onError={onSpriteError}
+                alt=""
+                className="w-36 h-36 object-contain -mt-12"
+                style={{ filter: "drop-shadow(0 6px 5px rgba(0,0,0,0.25))" }}
+                whileHover={{ scale: 1.08, rotate: -3 }}
+                draggable={false}
+              />
+              <span className="text-4xl font-black" style={{ textShadow: "0 2px 0 rgba(0,0,0,0.18)" }}>
+                {s.label}
+              </span>
+              <span className="bg-white/30 rounded-full px-5 py-1 text-lg font-bold">{s.typePill}</span>
             </motion.button>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mt-4">
-        <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={() => navigate("/pokedex")}
-          className="bg-pokemon-yellow/90 rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
-        >
-          <Sparkles size={36} className="text-pokemon-darkred" />
-          <span className="text-xl font-black text-pokemon-darkred">Pokédex</span>
-        </motion.button>
-        <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={() => navigate("/regions")}
-          className="bg-green-400 rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
-        >
-          <Map size={36} className="text-white" />
-          <span className="text-xl font-black text-white">Regions</span>
-        </motion.button>
-        <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={() => navigate("/progress")}
-          className="bg-pokemon-yellow rounded-3xl py-4 flex flex-col items-center justify-center gap-1 shadow-md min-h-[104px]"
-        >
-          <Trophy size={36} className="text-pokemon-darkred" />
-          <span className="text-xl font-black text-pokemon-darkred">My Progress</span>
-        </motion.button>
+      {/* Fun row — creative corner + explore screens as chunky white tiles */}
+      <div className="flex gap-4 justify-center flex-wrap mb-1">
+        {fun.map((f, i) => (
+          <motion.button
+            key={f.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.05, type: "spring", stiffness: 220 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => go(f.path)}
+            className={`w-[150px] h-[120px] rounded-3xl flex flex-col items-center justify-center gap-1 text-lg font-black ${
+              f.gold ? "text-amber-900" : "text-gray-700"
+            }`}
+            style={{
+              background: f.gold ? "linear-gradient(160deg,#ffe27a,#ffc83d)" : "#ffffff",
+              boxShadow: f.gold ? "0 6px 0 #d99e16" : "0 6px 0 rgba(0,0,0,0.1)",
+            }}
+          >
+            <span className="text-4xl leading-none" aria-hidden>{f.emoji}</span>
+            {f.label}
+          </motion.button>
+        ))}
       </div>
     </div>
   );
