@@ -15,13 +15,13 @@ const BASE: string =
   "/";
 const root = BASE.endsWith("/") ? BASE : BASE + "/";
 
-export type Scene = "menu" | "learn" | "rest";
+// Background music plays only on menu screens; learning modules are silent so
+// voice narration is clear, and module completion plays the jingle (ADR-005).
+export type Scene = "menu";
 
 // Curated mapping of scene -> looping playlist (filenames in public/audio).
 const SCENES: Record<Scene, string[]> = {
   menu: ["main-menu", "mii-channel", "mii-plaza", "wii-play-title"],
-  learn: ["mii-parade", "training-menu", "mii-channel"],
-  rest: ["yoga"],
 };
 
 const MUTE_KEY = "pokelearn_music_muted";
@@ -31,8 +31,30 @@ let jingle: HTMLAudioElement | null = null;
 let scene: Scene | null = null;
 let playlist: string[] = [];
 let idx = 0;
-let volume = 0.32;
+// Keep music well under the narration: the bundled tracks are mastered loud
+// while the TTS clips are quiet.
+let volume = 0.2;
 let muted = readMuted();
+
+// Ducking state: the jingle and active narration each pull the background
+// music down further. Recomputed by applyBgVolume().
+let jingleDucking = false;
+let speechDucking = false;
+
+function applyBgVolume() {
+  if (!bg) return;
+  let v = volume;
+  if (jingleDucking) v *= 0.4;
+  if (speechDucking) v *= 0.25;
+  bg.volume = v;
+}
+
+// Called by lib/tts.ts while narration is playing so the voice always sits
+// on top of the music.
+export function setSpeechDucking(active: boolean) {
+  speechDucking = active;
+  applyBgVolume();
+}
 
 function readMuted(): boolean {
   try {
@@ -54,8 +76,8 @@ function bgEl(): HTMLAudioElement {
   if (!bg) {
     bg = new Audio();
     bg.preload = "auto";
-    bg.volume = volume;
     bg.addEventListener("ended", playNext);
+    applyBgVolume();
   }
   return bg;
 }
@@ -69,12 +91,25 @@ function playNext() {
   if (!muted) void a.play().catch(() => {});
 }
 
+// The completion tracks are full-length songs, not short stings — they must
+// be stopped explicitly whenever the app moves on, or they keep playing
+// under the next screen.
+function stopJingle() {
+  if (jingle) {
+    jingle.pause();
+    jingle.currentTime = 0;
+  }
+  jingleDucking = false;
+  applyBgVolume(); // un-duck
+}
+
 // Switch background music to a scene's playlist. Idempotent per scene.
 export function playScene(s: Scene) {
   if (s === scene) {
     if (!muted && bg && bg.paused) void bg.play().catch(() => {});
     return;
   }
+  stopJingle();
   scene = s;
   playlist = shuffle(SCENES[s]);
   idx = 0;
@@ -92,10 +127,12 @@ export function playJingle(name: "results" | "result-display" = "result-display"
     jingle = new Audio();
     jingle.volume = Math.min(1, volume + 0.25);
     jingle.addEventListener("ended", () => {
-      if (bg) bg.volume = volume;
+      jingleDucking = false;
+      applyBgVolume();
     });
   }
-  if (bg) bg.volume = volume * 0.4; // duck
+  jingleDucking = true;
+  applyBgVolume(); // duck
   jingle.src = track(name);
   jingle.currentTime = 0;
   void jingle.play().catch(() => {});
@@ -103,6 +140,7 @@ export function playJingle(name: "results" | "result-display" = "result-display"
 
 export function stop() {
   scene = null;
+  stopJingle();
   if (bg) {
     bg.pause();
     bg.currentTime = 0;
@@ -118,6 +156,7 @@ export function setMusicMuted(value: boolean) {
   }
   if (muted) {
     if (bg) bg.pause();
+    stopJingle();
   } else if (scene) {
     if (bg && bg.paused) void bg.play().catch(() => {});
   }
@@ -129,5 +168,5 @@ export function isMusicMuted(): boolean {
 
 export function setVolume(v: number) {
   volume = Math.max(0, Math.min(1, v));
-  if (bg) bg.volume = volume;
+  applyBgVolume();
 }

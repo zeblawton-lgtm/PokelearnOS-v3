@@ -9,8 +9,8 @@
 
 A single bootable `dist/pokelearnos.iso` for a Dell Inspiron 7306 2-in-1 that,
 after install, boots straight into a full-screen, touch-first, Pokémon-themed
-educational game for two children — fully offline, with daily time limits,
-per-child progress, and a parent-only admin/recovery flow.
+educational game for two children — fully offline, with per-child progress and
+a parent-only admin/recovery flow.
 
 ## 2. Target Hardware (fixed — do NOT re-validate)
 
@@ -37,20 +37,27 @@ ORM with Postgres (dev) / SQLite (kiosk) · Chromium kiosk on Ubuntu LTS.
   near/far. Pokémon are imaginative guides only; never present fictional regions
   as real places.
 - **Spanish** — colors, numbers, greetings, simple phrases, matching.
+- **Creative corner (ADR-006)** — Coloring (finger-paint over bundled Pokémon
+  artwork), Tracing (letters, numbers, shapes), Connect the Dots (outlines
+  generated at runtime from bundled artwork), and Memory Match. Fully offline,
+  touch-first, positive feedback only.
 
 Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habitats).
 
 ## 6. Session Control
 
-- Daily limit configurable 10–30 min (default 15), tracked per child.
-- Countdown + end-of-session warning; friendly "Your Pokémon are resting!" rest
-  screen the child cannot bypass.
-- Parent PIN/password overlay can extend or end the session.
+- No time-based blocking (ADR-004): no daily limit, countdown, or rest screen.
+  Children can play as long as they like; sessions record minutes used for the
+  Progress page only.
+- Parent PIN/password overlay can end the session.
 
 ## 7. Offline & Assets
 
 - No internet at runtime. Sprites/audio are bundled and served locally; missing
   sprites fall back to a bundled SVG. PokéAPI is build-time/admin refresh only.
+- Voice narration is best-effort via a LAN Qwen3-TTS box (`TTS_URL`), proxied
+  by the backend with on-disk caching and SpeechSynthesis fallback — the app
+  never requires it (ADR-005).
 
 ## 8. Kiosk Lockdown
 
@@ -62,7 +69,7 @@ Plus exploration screens: an offline **Pokédex** and **Pokémon Homes** (habita
 
 The project is complete only when: repo structure exists; app launches locally;
 frontend loads local assets; backend API starts; database initialises; two child
-profiles exist; daily timer enforcement works; rest screen appears on timeout;
+profiles exist; sessions start and run without time-based blocking;
 parent admin overlay works; LLM can be disabled without breaking the app; offline
 mode works; `pnpm run typecheck` passes; the ISO build command exists and is
 reproducible; docs, QA report, and security report are complete.

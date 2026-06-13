@@ -1,7 +1,15 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
 import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { useState, useCallback, useMemo } from "react";
+import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenText } from "@/lib/pronounce";
+import {
+  POKEMON_POOL,
+  getSpokenQuestion,
+  getSpokenExplanation,
+  type AnyQuestion,
+} from "@/lib/spoken-math";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
@@ -10,29 +18,6 @@ import { math3YoQuestions, type Math3YoQuestion } from "@/content/math-3yo";
 import { math5YoQuestions, type Math5YoQuestion } from "@/content/math-5yo";
 
 const SPRITE = ARTWORK;
-
-const POKEMON_POOL = [
-  { id: 25, name: "Pikachu" },
-  { id: 39, name: "Jigglypuff" },
-  { id: 133, name: "Eevee" },
-  { id: 175, name: "Togepi" },
-  { id: 54, name: "Psyduck" },
-  { id: 7, name: "Squirtle" },
-  { id: 1, name: "Bulbasaur" },
-  { id: 4, name: "Charmander" },
-  { id: 52, name: "Meowth" },
-  { id: 143, name: "Snorlax" },
-  { id: 35, name: "Clefairy" },
-  { id: 79, name: "Slowpoke" },
-  { id: 172, name: "Pichu" },
-  { id: 37, name: "Vulpix" },
-  { id: 113, name: "Chansey" },
-  { id: 58, name: "Growlithe" },
-  { id: 92, name: "Gastly" },
-  { id: 60, name: "Poliwag" },
-];
-
-type AnyQuestion = Math3YoQuestion | Math5YoQuestion;
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -55,6 +40,7 @@ function CountVisual({ count, id, name }: { count: number; id: number; name: str
         <motion.img
           key={i}
           src={SPRITE(id)}
+          onError={onSpriteError}
           alt={name}
           className={`${sz} object-contain`}
           initial={{ scale: 0, opacity: 0 }}
@@ -76,6 +62,7 @@ function AddVisual({ a, b, id, name }: { a: number; b: number; id: number; name:
           <motion.img
             key={`a${i}`}
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt={name}
             className={`${sz} object-contain`}
             initial={{ scale: 0 }}
@@ -90,6 +77,7 @@ function AddVisual({ a, b, id, name }: { a: number; b: number; id: number; name:
           <motion.img
             key={`b${i}`}
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt={name}
             className={`${sz} object-contain`}
             initial={{ scale: 0 }}
@@ -112,6 +100,7 @@ function SubtractVisual({ a, b, id, name }: { a: number; b: number; id: number; 
         <motion.img
           key={`r${i}`}
           src={SPRITE(id)}
+          onError={onSpriteError}
           alt={name}
           className={`${sz} object-contain`}
           initial={{ scale: 0 }}
@@ -130,6 +119,7 @@ function SubtractVisual({ a, b, id, name }: { a: number; b: number; id: number; 
         >
           <img
             src={SPRITE(id)}
+            onError={onSpriteError}
             alt=""
             className={`${sz} object-contain opacity-20 grayscale`}
           />
@@ -151,6 +141,7 @@ function MultiplyVisual({ a, b, id, name }: { a: number; b: number; id: number; 
             <motion.img
               key={col}
               src={SPRITE(id)}
+              onError={onSpriteError}
               alt={name}
               className="w-20 h-20 object-contain"
               initial={{ scale: 0 }}
@@ -165,6 +156,40 @@ function MultiplyVisual({ a, b, id, name }: { a: number; b: number; id: number; 
   );
 }
 
+function NumberEquationVisual({ q }: { q: Math5YoQuestion }) {
+  if (q.type === "word") {
+    return (
+      <div className="w-full max-w-4xl rounded-3xl bg-pokemon-yellow/20 border-4 border-pokemon-yellow/30 px-5 py-8">
+        <p className="text-4xl font-black text-gray-800 leading-tight">
+          {q.wordProblem}
+        </p>
+      </div>
+    );
+  }
+
+  const symbol = q.type === "add" ? "+" : q.type === "subtract" ? "−" : "×";
+
+  return (
+    <div className="w-full flex flex-wrap items-center justify-center gap-4">
+      <span className="min-w-28 rounded-3xl bg-blue-50 border-4 border-blue-200 px-5 py-4 text-8xl font-black leading-none text-blue-700">
+        {q.a}
+      </span>
+      <span className="text-7xl font-black leading-none text-gray-400">
+        {symbol}
+      </span>
+      <span className="min-w-28 rounded-3xl bg-amber-50 border-4 border-amber-200 px-5 py-4 text-8xl font-black leading-none text-amber-700">
+        {q.b}
+      </span>
+      <span className="text-7xl font-black leading-none text-gray-400">
+        =
+      </span>
+      <span className="min-w-28 rounded-3xl bg-gray-50 border-4 border-gray-200 px-5 py-4 text-8xl font-black leading-none text-gray-700">
+        ?
+      </span>
+    </div>
+  );
+}
+
 function QuestionVisual({
   q, pokemonId, pokemonName, is3yo,
 }: {
@@ -172,6 +197,10 @@ function QuestionVisual({
 }) {
   const q3 = q as Math3YoQuestion;
   const q5 = q as Math5YoQuestion;
+
+  if (!is3yo) {
+    return <NumberEquationVisual q={q5} />;
+  }
 
   if (q3.type === "count" && q3.count != null) {
     return <CountVisual count={q3.count} id={pokemonId} name={pokemonName} />;
@@ -186,22 +215,29 @@ function QuestionVisual({
     return <MultiplyVisual a={q5.a ?? 2} b={q5.b ?? 2} id={pokemonId} name={pokemonName} />;
   }
   // Word problem — large sprite of the named Pokémon
-  return <img src={SPRITE(q.pokemonId)} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
+  return <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={pokemonName} className="w-56 h-56 object-contain mx-auto drop-shadow-lg" />;
+}
+
+// Shown under a wrong answer so the child learns why, not just that.
+function getExplanation(q: AnyQuestion): string {
+  const q3 = q as Math3YoQuestion;
+  const q5 = q as Math5YoQuestion;
+  if (q3.type === "count") return `Count them one by one — there are ${q.answer}.`;
+  if (q3.type === "add" || q5.type === "add") return `${q.a} + ${q.b} = ${q.answer}`;
+  if (q3.type === "subtract" || q5.type === "subtract") return `${q.a} − ${q.b} = ${q.answer}`;
+  if (q5.type === "multiply") return `${q5.a} × ${q5.b} = ${q.answer}`;
+  return `The answer is ${q.answer}.`;
 }
 
 function getPrompt(q: AnyQuestion, pokemonName: string, is3yo: boolean): string {
   const q3 = q as Math3YoQuestion;
-  const q5 = q as Math5YoQuestion;
 
   if (is3yo) {
     if (q3.type === "count") return `How many ${pokemonName}?`;
     if (q3.type === "add") return `${q3.a} ${pokemonName} + ${q3.b} ${pokemonName} = ?`;
     return `${q3.a} ${pokemonName} − ${q3.b} ${pokemonName} = ?`;
   } else {
-    if (q5.type === "word") return q5.wordProblem!;
-    if (q5.type === "add") return `${q5.a} ${pokemonName} + ${q5.b} ${pokemonName} = ?`;
-    if (q5.type === "subtract") return `${q5.a} ${pokemonName} − ${q5.b} ${pokemonName} = ?`;
-    return `${q5.a} × ${q5.b} = ?`;
+    return "";
   }
 }
 
@@ -226,6 +262,7 @@ export default function MathPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [wrong, setWrong] = useState(false);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
@@ -234,20 +271,40 @@ export default function MathPage() {
   const isWordProblem = (q as Math5YoQuestion).type === "word";
   const displayId = isWordProblem ? q.pokemonId : gamePokemon.id;
   const displayName = isWordProblem ? q.pokemonName : gamePokemon.name;
+  const prompt = getPrompt(q, gamePokemon.name, is3yo);
+
+  // Read each question aloud (Vivian voice; falls back to SpeechSynthesis).
+  useEffect(() => {
+    if (done) return;
+    void speakText(spokenText(getSpokenQuestion(q, gamePokemon.name, is3yo)), "en");
+  }, [q, gamePokemon.name, is3yo, done]);
+  useEffect(() => () => stopSpeaking(), []);
+
+  // Warm the audio for this session's questions so narration is instant.
+  useEffect(() => {
+    void prefetch(questions.map((qq) => ({
+      text: spokenText(getSpokenQuestion(qq, gamePokemon.name, is3yo)),
+      lang: "en" as const,
+    })));
+  }, [questions, gamePokemon.name, is3yo]);
+
+  const advance = useCallback(() => {
+    if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }
+    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+  }, [idx, questions.length]);
 
   const handleAnswer = useCallback(async (choice: number) => {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
-    if (correct) playCorrect(); else playWrong();
-    if (correct) { setScore(s => s + 1); setStreak(s => s + 1); }
+    if (correct) { stopSpeaking(); playCorrect(); } else { playWrong(); void speakText(spokenText(getSpokenExplanation(q)), "en"); }
+    if (correct) { setScore(s => s + 1); if (!is3yo) setStreak(s => s + 1); }
     else { setStreak(0); }
     await logAttempt("math", q.id, correct);
-    setTimeout(() => {
-      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-      else { setIdx(i => i + 1); setSelected(null); }
-    }, 1100);
-  }, [selected, q, idx, questions.length, logAttempt]);
+    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
+    if (correct) setTimeout(advance, 1100);
+    else setWrong(true);
+  }, [selected, q, is3yo, logAttempt, advance]);
 
   // ─── Done screen ────────────────────────────────────────────────────────────
   if (done) {
@@ -258,11 +315,19 @@ export default function MathPage() {
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200 }}
         >
-          <img
-            src={SPRITE(gamePokemon.id)}
-            alt={gamePokemon.name}
-            className="w-64 h-64 mx-auto mb-4 drop-shadow-xl"
-          />
+          {is3yo ? (
+            <img
+              src={SPRITE(gamePokemon.id)}
+              onError={onSpriteError}
+              alt={gamePokemon.name}
+              className="w-64 h-64 mx-auto mb-4 drop-shadow-xl"
+            />
+          ) : (
+            <div className="w-64 h-64 mx-auto mb-4 rounded-3xl bg-pokemon-yellow/20 border-4 border-pokemon-yellow/40 flex flex-col items-center justify-center">
+              <span className="text-8xl font-black leading-none text-pokemon-red">{score}</span>
+              <span className="text-2xl font-black text-gray-600">correct</span>
+            </div>
+          )}
           <h2 className="text-5xl font-black text-pokemon-red mb-2">Great job!</h2>
           <p className="text-3xl font-bold text-gray-700 mb-6">
             {score} / {questions.length} correct
@@ -271,7 +336,7 @@ export default function MathPage() {
             {questions.map((_, i) => (
               <Star
                 key={i}
-                size={32}
+                size={45}
                 className={i < score ? "text-pokemon-yellow fill-pokemon-yellow" : "text-gray-300"}
               />
             ))}
@@ -293,9 +358,9 @@ export default function MathPage() {
       <div className="flex items-center gap-4 mb-4">
         <button
           onClick={() => navigate("/home")}
-          className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center"
+          className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center"
         >
-          <ArrowLeft size={28} />
+          <ArrowLeft size={40} />
         </button>
         <div className="flex-1">
           <p className="text-lg font-bold text-gray-500">
@@ -331,14 +396,19 @@ export default function MathPage() {
                 is3yo={is3yo}
               />
             </div>
-            <p className="text-2xl font-black text-gray-800 leading-snug">
-              {getPrompt(q, gamePokemon.name, is3yo)}
-            </p>
+            {prompt && (
+              <p className="text-2xl font-black text-gray-800 leading-snug">
+                {prompt}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-4 w-full">
             {choices.map((choice) => {
               let bg = "bg-white border-4 border-gray-200 text-gray-800";
+              const sizeClass = is3yo
+                ? "py-6 text-4xl min-h-[100px]"
+                : "py-7 text-6xl min-h-[120px]";
               if (selected !== null) {
                 if (choice === q.answer) bg = "bg-green-400 border-green-500 text-white";
                 else if (choice === selected) bg = "bg-red-400 border-red-500 text-white";
@@ -348,7 +418,7 @@ export default function MathPage() {
                   key={choice}
                   whileTap={{ scale: 0.92 }}
                   onClick={() => handleAnswer(choice)}
-                  className={`${bg} rounded-3xl py-6 text-4xl font-black shadow transition-all min-h-[100px]`}
+                  className={`${bg} rounded-3xl ${sizeClass} font-black shadow transition-all`}
                 >
                   {choice}
                 </motion.button>
@@ -356,7 +426,24 @@ export default function MathPage() {
             })}
           </div>
 
-          {streak >= 3 && (
+          {wrong && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+            >
+              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
+              <p className="text-3xl font-black text-gray-800 mb-4">{getExplanation(q)}</p>
+              <button
+                onClick={advance}
+                className="bg-pokemon-red text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
+              >
+                Next →
+              </button>
+            </motion.div>
+          )}
+
+          {!wrong && !is3yo && streak >= 3 && (
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

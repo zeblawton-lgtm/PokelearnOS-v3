@@ -10,13 +10,13 @@
 # WHAT THIS SCRIPT DOES:
 #   Step 1:  Verify pre-conditions (root, Ubuntu 26.04, kids user exists)
 #   Step 2:  Configure GDM3 autologin for the kids user
-#   Step 3:  Disable GNOME screen lock and screensaver for the kids user
+#   Step 3:  Disable GNOME screen lock and screensaver (system dconf db)
 #   Step 4:  Block keyboard shortcuts that escape the kiosk (via dconf)
 #   Step 5:  Disable GNOME session features kids should not reach
 #   Step 6:  Remove desktop entries that should not appear
 #   Step 7:  Mask TTY gettys tty2–tty6 (TTY switching blocked)
 #   Step 8:  Install polkit rules (50-kids.rules)
-#   Step 9:  Configure iio-sensor-proxy to lock orientation to landscape
+#   Step 9:  Ensure screen auto-rotation stays enabled (tent/tablet mode)
 #   Step 10: Disable Bluetooth (not needed for kiosk)
 #   Step 11: Mask systemd sleep/suspend/hibernate targets
 #   Step 12: Configure logind — ignore lid close and power button
@@ -106,13 +106,27 @@ ok "GDM3 autologin configured for ${KIDS_USER}."
 # ---------------------------------------------------------------------------
 step "3: Disable screen lock and screensaver"
 
-KIDS_DCONF_DIR="/home/${KIDS_USER}/.config/dconf"
-mkdir -p "${KIDS_DCONF_DIR}"
-chown "${KIDS_USER}:${KIDS_USER}" "${KIDS_DCONF_DIR}"
+# These settings MUST live in a system dconf database. Text keyfiles under
+# ~/.config/dconf/ are never read by anything — ~/.config/dconf/user is a
+# binary GVDB that only the dconf daemon writes. (Earlier revisions of this
+# script wrote per-user text keyfiles there; they were silently ignored,
+# which left GNOME's default 5-minute idle lock active — fatal for the
+# password-locked kids account, since no password can ever unlock it.)
+command -v dconf >/dev/null 2>&1 || die "dconf CLI not found — install dconf-cli first"
 
-# Write a dconf keyfile that will be compiled into the user's dconf db
-KEYFILE="/home/${KIDS_USER}/.config/dconf/pokelearnos-kiosk"
-cat > "${KEYFILE}" << 'KEYFILE_EOF'
+DCONF_DB_DIR="/etc/dconf/db/pokelearnos.d"
+mkdir -p "${DCONF_DB_DIR}/locks" /etc/dconf/profile
+
+# Session profile: the writable per-user db first, then our kiosk db.
+# The locks below force the kiosk values even where a user db already has
+# overrides. Note: this profile applies to every desktop session on the
+# machine (the parent account too) — acceptable on a dedicated kiosk.
+cat > /etc/dconf/profile/user << 'PROFILE_EOF'
+user-db:user
+system-db:pokelearnos
+PROFILE_EOF
+
+cat > "${DCONF_DB_DIR}/00-kiosk" << 'KEYFILE_EOF'
 [org/gnome/desktop/screensaver]
 lock-enabled=false
 idle-activation-enabled=false
@@ -135,15 +149,40 @@ disable-log-out=true
 disable-user-switching=true
 KEYFILE_EOF
 
-chown "${KIDS_USER}:${KIDS_USER}" "${KEYFILE}"
-ok "Screen lock / screensaver disabled (dconf keyfile written)."
+# Lock the safety-critical keys so no per-user setting can re-enable them.
+cat > "${DCONF_DB_DIR}/locks/pokelearnos" << 'LOCKS_EOF'
+/org/gnome/desktop/screensaver/lock-enabled
+/org/gnome/desktop/screensaver/idle-activation-enabled
+/org/gnome/desktop/screensaver/ubuntu-lock-on-suspend
+/org/gnome/desktop/session/idle-delay
+/org/gnome/desktop/lockdown/disable-lock-screen
+/org/gnome/desktop/lockdown/disable-log-out
+/org/gnome/desktop/lockdown/disable-user-switching
+/org/gnome/settings-daemon/plugins/power/sleep-inactive-ac-timeout
+/org/gnome/settings-daemon/plugins/power/sleep-inactive-battery-timeout
+/org/gnome/settings-daemon/plugins/power/power-button-action
+/org/gnome/settings-daemon/plugins/power/lid-close-ac-action
+/org/gnome/settings-daemon/plugins/power/lid-close-battery-action
+/org/gnome/settings-daemon/plugins/media-keys/screensaver
+/org/gnome/settings-daemon/plugins/media-keys/logout
+/org/gnome/settings-daemon/plugins/media-keys/terminal
+/org/gnome/settings-daemon/plugins/media-keys/control-center
+LOCKS_EOF
+
+# Remove the inert per-user keyfiles from earlier revisions of this script.
+rm -f "/home/${KIDS_USER}/.config/dconf/pokelearnos-kiosk" \
+      "/home/${KIDS_USER}/.config/dconf/pokelearnos-shortcuts" \
+      "/home/${KIDS_USER}/.config/dconf/pokelearnos-gnome" \
+      "/home/${KIDS_USER}/.config/dconf/pokelearnos-orientation"
+
+ok "Screen lock / screensaver disabled (system dconf keyfile written)."
 
 # ---------------------------------------------------------------------------
 # Step 4 — Block keyboard shortcuts that escape the kiosk
 # ---------------------------------------------------------------------------
 step "4: Block keyboard shortcuts"
 
-SHORTCUTS_KEYFILE="/home/${KIDS_USER}/.config/dconf/pokelearnos-shortcuts"
+SHORTCUTS_KEYFILE="${DCONF_DB_DIR}/01-shortcuts"
 cat > "${SHORTCUTS_KEYFILE}" << 'SHORTCUTS_EOF'
 [org/gnome/settings-daemon/plugins/media-keys]
 screensaver=@as []
@@ -179,7 +218,6 @@ show-screenshot-ui=@as []
 open-new-window-application=@as []
 SHORTCUTS_EOF
 
-chown "${KIDS_USER}:${KIDS_USER}" "${SHORTCUTS_KEYFILE}"
 ok "Keyboard shortcuts cleared."
 
 # ---------------------------------------------------------------------------
@@ -187,7 +225,7 @@ ok "Keyboard shortcuts cleared."
 # ---------------------------------------------------------------------------
 step "5: Disable GNOME overview, notifications, extension manager"
 
-GNOME_KEYFILE="/home/${KIDS_USER}/.config/dconf/pokelearnos-gnome"
+GNOME_KEYFILE="${DCONF_DB_DIR}/02-gnome"
 cat > "${GNOME_KEYFILE}" << 'GNOME_EOF'
 [org/gnome/shell]
 enabled-extensions=@as []
@@ -203,7 +241,6 @@ clock-show-seconds=false
 enable-hot-corners=false
 GNOME_EOF
 
-chown "${KIDS_USER}:${KIDS_USER}" "${GNOME_KEYFILE}"
 ok "GNOME features restricted."
 
 # ---------------------------------------------------------------------------
@@ -267,20 +304,29 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 9 — Lock screen orientation to landscape (iio-sensor-proxy)
+# Step 9 — Keep screen auto-rotation enabled (tent/tablet mode)
 # ---------------------------------------------------------------------------
-step "9: Lock orientation to landscape"
+step "9: Keep auto-rotation enabled (tent mode)"
 
-# The 7306 is a 2-in-1 — auto-rotation can flip the kiosk screen in tablet mode.
-# We disable auto-rotation for the kids user via dconf.
-ORIENTATION_KEYFILE="/home/${KIDS_USER}/.config/dconf/pokelearnos-orientation"
+# The 7306 is a 2-in-1 used in tent mode — the screen MUST auto-rotate when
+# the laptop is folded (iio-sensor-proxy + GNOME handle it). An earlier
+# revision locked orientation to stop tablet-mode flipping, which broke tent
+# mode the moment the dconf fix made this script effective. Write the key
+# explicitly as false so re-running the script repairs laptops that got the
+# old `true` value.
+ORIENTATION_KEYFILE="${DCONF_DB_DIR}/03-orientation"
 cat > "${ORIENTATION_KEYFILE}" << 'ORI_EOF'
 [org/gnome/settings-daemon/peripherals/touchscreen]
-orientation-lock=true
+orientation-lock=false
 ORI_EOF
 
-chown "${KIDS_USER}:${KIDS_USER}" "${ORIENTATION_KEYFILE}"
-ok "Screen orientation locked to landscape."
+ok "Screen auto-rotation enabled (tent/tablet mode supported)."
+
+# Compile every system dconf keyfile written above (steps 3, 4, 5, 9) into
+# the binary database GNOME reads. Running sessions pick the changes up
+# live; reboot afterwards for a clean kiosk session anyway.
+dconf update
+ok "System dconf database compiled (dconf update)."
 
 # ---------------------------------------------------------------------------
 # Step 10 — Disable Bluetooth
@@ -341,6 +387,6 @@ echo "    3. Test the 5-second corner hold → PIN entry works"
 echo "    4. Default parent PIN: 1234 — change via the admin overlay"
 echo ""
 echo "  Recovery (if the kiosk gets stuck):"
-echo "    Ctrl+Alt+F1 → login as parent (Zulu) → sudo systemctl stop pokelearnos"
-echo "    Or: journalctl _UID=\$(id -u kids) -n 50 --no-pager"
+echo "    Ctrl+Alt+F1 → login as parent → sudo -u kids XDG_RUNTIME_DIR=/run/user/\$(id -u kids) systemctl --user stop pokelearnos.service"
+echo "    Or: sudo -u kids XDG_RUNTIME_DIR=/run/user/\$(id -u kids) journalctl --user -u pokelearnos.service -n 50 --no-pager"
 echo ""

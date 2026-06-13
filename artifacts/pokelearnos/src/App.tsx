@@ -9,13 +9,16 @@ import Home from "@/pages/home";
 import MathPage from "@/pages/math";
 import SpanishPage from "@/pages/spanish";
 import GeographyPage from "@/pages/geography";
-import RestScreen from "@/pages/rest";
+import ColoringPage from "@/pages/coloring";
+import TracingPage from "@/pages/tracing";
+import DotsPage from "@/pages/dots";
+import MatchPage from "@/pages/match";
 import Progress from "@/pages/progress";
 import PokedexPage from "@/pages/pokedex";
 import RegionsPage from "@/pages/regions";
 import NotFound from "@/pages/not-found";
 import { ParentOverlay } from "@/components/ParentOverlay";
-import { TimerBar } from "@/components/TimerBar";
+import { TopBar } from "@/components/TopBar";
 import * as music from "@/lib/music";
 
 const queryClient = new QueryClient({
@@ -23,22 +26,22 @@ const queryClient = new QueryClient({
 });
 
 function AppRoutes() {
-  const { profile, isResting } = useSession();
+  const { profile } = useSession();
   const [location] = useLocation();
 
   useEffect(() => {
     if (!profile) { music.stop(); return; }
-    if (isResting) { music.playScene("rest"); return; }
-    if (["/math", "/spanish", "/geography"].includes(location)) music.playScene("learn");
+    // Learning modules are music-free so narration is clear; the completion
+    // jingle still plays over silence when a module finishes.
+    if (["/math", "/spanish", "/geography", "/coloring", "/tracing", "/dots", "/match"].includes(location)) music.stop();
     else music.playScene("menu");
-  }, [profile, isResting, location]);
+  }, [profile, location]);
 
-  if (isResting) return <RestScreen />;
   if (!profile) return <ProfileSelect />;
 
   return (
     <>
-      <TimerBar />
+      <TopBar />
       <div className="pt-16 pb-4 min-h-screen">
         <AnimatePresence mode="wait">
           <Switch key={location}>
@@ -46,6 +49,10 @@ function AppRoutes() {
             <Route path="/math" component={MathPage} />
             <Route path="/spanish" component={SpanishPage} />
             <Route path="/geography" component={GeographyPage} />
+            <Route path="/coloring" component={ColoringPage} />
+            <Route path="/tracing" component={TracingPage} />
+            <Route path="/dots" component={DotsPage} />
+            <Route path="/match" component={MatchPage} />
             <Route path="/progress" component={Progress} />
             <Route path="/pokedex" component={PokedexPage} />
             <Route path="/regions" component={RegionsPage} />

@@ -2,19 +2,29 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { settingsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import { createHash } from "crypto";
+import {
+  DEFAULT_PIN_HASH,
+  hashPin,
+  issueAdminToken,
+  pinRateLimitStatus,
+  recordFailedPinAttempt,
+  requireAdminAuth,
+  resetPinAttempts,
+} from "../lib/admin-auth";
 
 const router = Router();
-
-function hashPin(pin: string) {
-  return createHash("sha256").update(pin + "pokelearnos").digest("hex");
-}
-
-const DEFAULT_PIN_HASH = hashPin("1234");
 
 router.post("/admin/verify-pin", async (req, res) => {
   const { pin } = req.body;
   if (typeof pin !== "string") { res.status(400).json({ error: "pin required" }); return; }
+
+  const rateLimit = pinRateLimitStatus(req);
+  if (rateLimit.limited) {
+    res
+      .status(429)
+      .json({ error: "Too many PIN attempts", retryAfterSeconds: rateLimit.retryAfterSeconds });
+    return;
+  }
 
   const setting = await db.query.settingsTable.findFirst({
     where: eq(settingsTable.key, "parent_pin_hash"),
@@ -22,10 +32,17 @@ router.post("/admin/verify-pin", async (req, res) => {
 
   const storedHash = setting?.value ?? DEFAULT_PIN_HASH;
   const valid = hashPin(pin) === storedHash;
-  res.json({ valid });
+  if (!valid) {
+    recordFailedPinAttempt(req);
+    res.json({ valid: false });
+    return;
+  }
+
+  resetPinAttempts(req);
+  res.json({ valid: true, ...issueAdminToken() });
 });
 
-router.get("/admin/settings", async (req, res) => {
+router.get("/admin/settings", requireAdminAuth, async (req, res) => {
   const rows = await db.select().from(settingsTable);
   const out: Record<string, string> = {};
   for (const row of rows) {
@@ -34,7 +51,7 @@ router.get("/admin/settings", async (req, res) => {
   res.json(out);
 });
 
-router.put("/admin/settings", async (req, res) => {
+router.put("/admin/settings", requireAdminAuth, async (req, res) => {
   const { key, value } = req.body;
   if (!key || value === undefined) { res.status(400).json({ error: "key and value required" }); return; }
   if (key === "parent_pin_hash") { res.status(403).json({ error: "Use /admin/change-pin to update PIN" }); return; }
@@ -45,7 +62,7 @@ router.put("/admin/settings", async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post("/admin/change-pin", async (req, res) => {
+router.post("/admin/change-pin", requireAdminAuth, async (req, res) => {
   const { currentPin, newPin } = req.body;
   if (!currentPin || !newPin) { res.status(400).json({ error: "currentPin and newPin required" }); return; }
 

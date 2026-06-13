@@ -1,10 +1,15 @@
+import type { GeoSceneKind } from "@/components/GeoScene";
+
 export interface GeographyQuestion {
   id: string;
-  type: "continent" | "ocean" | "concept" | "feature";
+  type: "continent" | "ocean" | "concept" | "feature" | "climate";
   question: string;
   answer: string;
   choices: string[];
   hint?: string;
+  visual?: GeoSceneKind;
+  visualLabel?: string;
+  explanation?: string;
   pokemonId?: number;
   pokemonName?: string;
   imageDescription?: string;
@@ -12,11 +17,84 @@ export interface GeographyQuestion {
 
 export const geographyQuestions: GeographyQuestion[] = [
   {
+    id: "vis-sahara", type: "continent",
+    question: "This is the Sahara Desert. Which continent is it in?",
+    answer: "Africa",
+    choices: ["Africa", "Asia", "Australia"],
+    hint: "The Sahara is a huge hot desert in northern Africa",
+    visual: "sahara",
+    visualLabel: "Sahara Desert",
+    explanation: "Yes, Africa. The Sahara is a huge desert in Africa.",
+  },
+  {
+    id: "vis-amazon", type: "continent",
+    question: "This rainforest is the Amazon. Which continent is it in?",
+    answer: "South America",
+    choices: ["South America", "Europe", "Antarctica"],
+    hint: "Brazil has a lot of the Amazon rainforest",
+    visual: "rainforest",
+    visualLabel: "Amazon Rainforest",
+    explanation: "Yes, South America. The Amazon rainforest is mostly in South America.",
+  },
+  {
+    id: "vis-antarctica", type: "continent",
+    question: "This icy place is Antarctica. Which continent is covered in ice?",
+    answer: "Antarctica",
+    choices: ["Africa", "Antarctica", "North America"],
+    hint: "It is the coldest continent",
+    visual: "antarctica",
+    visualLabel: "Antarctica",
+    explanation: "Yes, Antarctica. It is a cold continent covered with ice.",
+  },
+  {
+    id: "vis-reef", type: "continent",
+    question: "The Great Barrier Reef is near which continent?",
+    answer: "Australia",
+    choices: ["Australia", "Europe", "Africa"],
+    hint: "Kangaroos live on this continent too",
+    visual: "reef",
+    visualLabel: "Great Barrier Reef",
+    explanation: "Yes, Australia. The Great Barrier Reef is near Australia.",
+  },
+  {
+    id: "vis-equator", type: "concept",
+    question: "Where is the equator on Earth?",
+    answer: "Middle",
+    choices: ["Top", "Middle", "Bottom"],
+    hint: "It is an imaginary line around the middle of Earth",
+    visual: "globe-equator",
+    visualLabel: "Equator on Earth",
+    explanation: "Yes, the equator goes around the middle of Earth.",
+  },
+  {
+    id: "clim-desert", type: "climate",
+    question: "What kind of climate is very dry with very little rain?",
+    answer: "Desert",
+    choices: ["Rainforest", "Desert", "Ocean"],
+    hint: "The Sahara is this kind of place",
+    visual: "desert",
+    visualLabel: "Dry Desert Climate",
+    explanation: "Yes, a desert is very dry and gets little rain.",
+  },
+  {
+    id: "clim-rainforest", type: "climate",
+    question: "What kind of climate is warm, wet, and full of trees?",
+    answer: "Rainforest",
+    choices: ["Rainforest", "Ice", "Desert"],
+    hint: "Lots of rain helps plants grow here",
+    visual: "rainforest",
+    visualLabel: "Warm Wet Rainforest",
+    explanation: "Yes, rainforests are warm, wet places with many plants.",
+  },
+  {
     id: "con01", type: "continent",
     question: "On which continent do you find the Sahara Desert and lions?",
     answer: "Africa",
     choices: ["Asia", "Africa", "Europe"],
     hint: "It is the second largest continent",
+    visual: "sahara",
+    visualLabel: "Sahara Desert",
+    explanation: "Africa has the Sahara Desert and many savannas where lions live.",
   },
   {
     id: "con02", type: "continent",
@@ -31,6 +109,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Antarctica",
     choices: ["Antarctica", "Australia", "Europe"],
     hint: "It is the coldest place on Earth",
+    visual: "antarctica",
+    visualLabel: "Icy Antarctica",
+    explanation: "Antarctica is the cold continent at the bottom of Earth.",
   },
   {
     id: "con04", type: "continent",
@@ -38,6 +119,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "South America",
     choices: ["North America", "South America", "Africa"],
     hint: "Brazil is here",
+    visual: "rainforest",
+    visualLabel: "Amazon Rainforest",
+    explanation: "The Amazon rainforest grows across South America.",
   },
   {
     id: "con05", type: "continent",
@@ -45,6 +129,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Australia",
     choices: ["Australia", "Asia", "Africa"],
     hint: "It is also an island!",
+    visual: "reef",
+    visualLabel: "Great Barrier Reef",
+    explanation: "Australia is the continent near the Great Barrier Reef.",
   },
   {
     id: "con06", type: "continent",
@@ -59,6 +146,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Pacific Ocean",
     choices: ["Atlantic Ocean", "Pacific Ocean", "Indian Ocean"],
     hint: "It covers more than half of Earth's water",
+    visual: "ocean",
+    visualLabel: "Big Ocean",
+    explanation: "The Pacific Ocean is Earth's biggest ocean.",
   },
   {
     id: "oc02", type: "ocean",
@@ -80,6 +170,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Mountain",
     choices: ["Mountain", "Island", "Ocean"],
     hint: "Everest is the tallest one",
+    visual: "mountain",
+    visualLabel: "Tall Mountain",
+    explanation: "A mountain is tall, rocky land that rises high.",
   },
   {
     id: "ft02", type: "feature",
@@ -94,6 +187,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Desert",
     choices: ["Forest", "Desert", "Ocean"],
     hint: "The Sahara is the biggest one",
+    visual: "desert",
+    visualLabel: "Dry Desert",
+    explanation: "A desert is dry and gets very little rain.",
   },
   {
     id: "ft04", type: "feature",
@@ -101,6 +197,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Forest",
     choices: ["Desert", "Ocean", "Forest"],
     hint: "The Amazon is a famous one",
+    visual: "forest",
+    visualLabel: "Green Forest",
+    explanation: "A forest is full of trees and animals.",
   },
   {
     id: "dir01", type: "concept",
@@ -129,6 +228,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Near the Equator",
     choices: ["Near the North Pole", "Near the Equator", "On a Mountain Top"],
     hint: "Countries like Brazil and Kenya are here",
+    visual: "globe-equator",
+    visualLabel: "Equator on Earth",
+    explanation: "Places near the equator get strong sunshine and are often warm.",
   },
   {
     id: "hot02", type: "concept",
@@ -136,6 +238,9 @@ export const geographyQuestions: GeographyQuestion[] = [
     answer: "Near the North Pole",
     choices: ["Near the Equator", "Near the North Pole", "In a Desert"],
     hint: "Polar bears live here",
+    visual: "north-pole",
+    visualLabel: "Cold North Pole",
+    explanation: "Places near the North Pole are cold for much of the year.",
     pokemonId: 87, pokemonName: "Dewgong",
   },
 ];

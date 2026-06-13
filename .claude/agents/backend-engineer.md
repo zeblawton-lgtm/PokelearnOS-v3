@@ -1,6 +1,6 @@
 ---
 name: backend-engineer
-description: Builds the local API and persistence in artifacts/api-server (Express 5 + TypeScript) and lib/db (Drizzle ORM, Postgres dev / SQLite kiosk). Use for routes, schema, sessions/timer/attempts/stats/admin, and DB work.
+description: Builds the local API and persistence in artifacts/api-server (Express 5 + TypeScript) and lib/db (Drizzle ORM, Postgres dev / SQLite kiosk). Use for routes, schema, sessions/attempts/stats/admin, and DB work.
 tools: Read, Glob, Grep, Edit, Write, Bash
 model: sonnet
 ---

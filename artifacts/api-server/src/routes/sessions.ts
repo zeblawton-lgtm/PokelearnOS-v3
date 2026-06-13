@@ -1,27 +1,34 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sessionsTable, profilesTable } from "@workspace/db/schema";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
+import { persistedMinutesForSession } from "../lib/session-usage";
 
 const router = Router();
 
 router.post("/sessions/start", async (req, res) => {
   const { profileId } = req.body;
   if (!profileId) { res.status(400).json({ error: "profileId required" }); return; }
+  const id = Number(profileId);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "profileId must be an integer" }); return; }
 
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, id));
+  if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
+
+  await closeOpenSessions(id);
   const [session] = await db.insert(sessionsTable)
-    .values({ profileId })
+    .values({ profileId: id })
     .returning();
   res.status(201).json(session);
 });
 
 router.post("/sessions/:id/end", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const session = await db.query.sessionsTable.findFirst({ where: eq(sessionsTable.id, id) });
   if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+  if (session.endedAt) { res.json(session); return; }
 
-  const started = new Date(session.startedAt).getTime();
-  const minutesUsed = Math.round((Date.now() - started) / 60000);
+  const minutesUsed = persistedMinutesForSession(session);
 
   const [updated] = await db.update(sessionsTable)
     .set({ endedAt: new Date(), minutesUsed })
@@ -30,33 +37,22 @@ router.post("/sessions/:id/end", async (req, res) => {
   res.json(updated);
 });
 
-router.get("/timer/:profileId", async (req, res) => {
-  const profileId = parseInt(req.params.profileId);
-
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.id, profileId));
-  if (!profile) { res.status(404).json({ error: "Profile not found" }); return; }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const rows = await db.select({ total: sql<number>`coalesce(sum(${sessionsTable.minutesUsed}), 0)` })
+async function closeOpenSessions(profileId: number): Promise<void> {
+  const openSessions = await db.select()
     .from(sessionsTable)
     .where(and(
       eq(sessionsTable.profileId, profileId),
-      gte(sessionsTable.startedAt, today),
+      isNull(sessionsTable.endedAt),
     ));
 
-  const minutesUsedToday = Number(rows[0]?.total ?? 0);
-  const minutesRemaining = Math.max(0, profile.dailyLimitMinutes - minutesUsedToday);
-
-  res.json({
-    sessionId: null,
-    profileId,
-    dailyLimitMinutes: profile.dailyLimitMinutes,
-    minutesUsedToday,
-    minutesRemaining,
-    isExpired: minutesRemaining <= 0,
-  });
-});
+  for (const session of openSessions) {
+    await db.update(sessionsTable)
+      .set({
+        endedAt: new Date(),
+        minutesUsed: persistedMinutesForSession(session),
+      })
+      .where(eq(sessionsTable.id, session.id));
+  }
+}
 
 export default router;

@@ -1,12 +1,33 @@
 import path from "node:path";
 import fs from "node:fs";
 import express, { type Express } from "express";
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+const defaultCorsOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+const allowedCorsOrigins = new Set(
+  (process.env.API_CORS_ORIGINS ?? defaultCorsOrigins.join(","))
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+const corsOptions: CorsOptions = {
+  allowedHeaders: ["Authorization", "Content-Type"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, false);
+      return;
+    }
+    callback(null, allowedCorsOrigins.has(origin));
+  },
+};
 
 app.use(
   pinoHttp({
@@ -27,7 +48,7 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

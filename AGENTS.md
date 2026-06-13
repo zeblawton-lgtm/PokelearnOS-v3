@@ -6,6 +6,10 @@ auto-loads `CLAUDE.md`, which imports this file via `@AGENTS.md`.
 
 ## Source of Truth
 
+This repository (`PokelearnOS-v3`) is the only active source tree. The sibling
+`pokelearnos/` and `pokelearnos-v2/` directories are archived historical
+material; do not edit, build, deploy, or copy source from them.
+
 `GOAL.md` is the project spec (target hardware, deliverable, release gate).
 `DECISIONS.md` is the append-only architecture decision log — new decisions go
 there with a date. If a request contradicts `GOAL.md`, push back and ask the

@@ -31,6 +31,7 @@
 set -euo pipefail
 
 INSTALL_DIR="${POKELEARNOS_INSTALL:-/opt/pokelearnos}"
+KIDS_HOME="${HOME:-/home/kids}"
 BACKEND_HOST="127.0.0.1"
 BACKEND_PORT="${PORT:-8765}"
 BACKEND_URL="http://${BACKEND_HOST}:${BACKEND_PORT}/api/healthz"
@@ -82,6 +83,9 @@ if [[ -f "${INSTALL_DIR}/.env" ]]; then
   source "${INSTALL_DIR}/.env"
   set +a
 fi
+
+export DATABASE_URL="${DATABASE_URL:-sqlite:${KIDS_HOME}/.local/share/pokelearnos/db.sqlite}"
+mkdir -p "$(dirname "${DATABASE_URL#sqlite:}")"
 
 APP_ENV=kiosk \
 NODE_ENV=production \
@@ -146,7 +150,7 @@ CHROMIUM_FLAGS=(
   # Chromium then silently falls back to its default profile (which on this
   # machine still carried the v2 service-worker cache). snap/chromium/common
   # is always writable by the chromium snap.
-  --user-data-dir=/home/kids/snap/chromium/common/pokelearnos-kiosk
+  --user-data-dir="${KIDS_HOME}/snap/chromium/common/pokelearnos-kiosk"
 
   # Disable UI chrome that has no place in a kiosk
   --disable-features=TranslateUI
@@ -190,5 +194,5 @@ log "Launching: ${CHROMIUM_BIN} (kiosk mode)"
 # ---------------------------------------------------------------------------
 # 5. exec Chromium — replaces this process; PID tracked by systemd
 # ---------------------------------------------------------------------------
-mkdir -p /home/kids/snap/chromium/common/pokelearnos-kiosk
+mkdir -p "${KIDS_HOME}/snap/chromium/common/pokelearnos-kiosk"
 exec "${CHROMIUM_BIN}" "${CHROMIUM_FLAGS[@]}"

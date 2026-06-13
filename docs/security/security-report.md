@@ -18,10 +18,10 @@ PokelearnOS is a child-facing kiosk application with the following threat model:
 | Control | Implementation | Status |
 |---------|---------------|--------|
 | Kiosk mode | Chromium `--kiosk` flag, no address bar | IMPLEMENTED |
-| OS lockdown | Restricted `pokelearnos` user, no sudo | IMPLEMENTED (kiosk) |
+| OS lockdown | Restricted `kids` user, no shell, no sudo | IMPLEMENTED (kiosk) |
 | No external content | All educational content bundled | IMPLEMENTED |
 | No unrestricted LLM | LLM_PROVIDER=none default | IMPLEMENTED |
-| No PokéAPI runtime | Sprites from static GitHub CDN only | IMPLEMENTED |
+| No PokéAPI runtime | Sprites and artwork bundled locally | IMPLEMENTED |
 | Screen exit prevention | GDM lockdown + dconf restrictions | IMPLEMENTED (kiosk) |
 
 ### Parent PIN Security
@@ -32,9 +32,9 @@ PokelearnOS is a child-facing kiosk application with the following threat model:
 | Default PIN | 1234 (must change on deployment) |
 | Storage | `settings` table, key `parent_pin_hash` |
 | Transmission | HTTPS in production (Replit proxy TLS) |
-| Brute force | No rate limiting in v1.0 (kiosk is air-gapped) |
+| Brute force | Failed PIN attempts are rate limited |
 
-**Recommendation:** Add rate limiting on `/api/admin/verify-pin` for network-connected deployments.
+**Recommendation:** Change the default PIN before child use.
 
 ### Network Security (Kiosk Mode)
 
@@ -65,6 +65,4 @@ PokelearnOS is a child-facing kiosk application with the following threat model:
 ## Remaining Risks
 
 1. **Default PIN 1234** — Must be changed before child use. Documented prominently.
-2. **No PIN rate limiting** — Acceptable for air-gapped kiosk; add for networked deployment.
-3. **Sprite CDN dependency** — Pokemon sprites load from `raw.githubusercontent.com`. In offline mode, sprites won't load (educational questions still work — text only).
-4. **No HTTPS in kiosk mode** — Backend serves on `http://127.0.0.1` (loopback only, acceptable).
+2. **No HTTPS in kiosk mode** — Backend serves on `http://127.0.0.1` (loopback only, acceptable).

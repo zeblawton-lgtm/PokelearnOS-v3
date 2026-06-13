@@ -10,13 +10,13 @@
 | Check | Status | Notes |
 |-------|--------|-------|
 | Replit workflow starts app | PASS | `artifacts/pokelearnos: web` running on port 25708 |
-| Preview loads frontend | PASS | Profile selector renders with Pikachu/Jigglypuff avatars |
+| Preview loads frontend | PASS | Profile selector renders with Dracovish/Zapdos avatars |
 | Backend health endpoint | PASS | `GET /api/healthz` → `{"status":"ok"}` |
 | PostgreSQL initializes | PASS | `pnpm --filter @workspace/db run push` succeeded |
-| Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded via `/api/admin/seed` |
+| Two child profiles exist | PASS | Michael (age 5) and Leo (age 3) seeded automatically on fresh database startup |
 | Profiles API | PASS | `GET /api/profiles` returns both profiles |
 | Session start API | PASS | `POST /api/sessions/start` returns session object |
-| Timer API | PASS | `GET /api/timer/1` returns `{minutesRemaining: 20, isExpired: false}` |
+| Timer API | PASS | `GET /api/timer/1` returns `{isUnlimited: true, isExpired: false}` |
 | Attempts API | PASS | `POST /api/attempts` logs correctly |
 | Stats API | PASS | `GET /api/stats/1` returns module breakdown |
 | Admin verify-pin | PASS | `POST /api/admin/verify-pin {pin:"1234"}` returns `{valid:true}` |
@@ -24,8 +24,8 @@
 | Math module (age 5) | PASS | Add, subtract, multiply, word problems |
 | Spanish module | PASS | Color, number, greeting, phrase questions |
 | World Explorer module | PASS | Continent, ocean, feature, concept questions |
-| Timer countdown | PASS | Timer bar counts down, `secondsRemaining` decrements |
-| Rest screen | PASS | Appears when `isResting=true` (timer expires) |
+| Timer countdown | REMOVED | Time restriction disabled; timer bar shows `No limit` |
+| Rest screen | REMOVED | No longer triggered by elapsed minutes |
 | Parent overlay | PASS | PIN entry modal, settings panel |
 | LLM disabled mode | PASS | No LLM calls made; all content is static |
 | Kiosk scripts exist | PASS | `system/` and `iso/` directories complete |
@@ -40,11 +40,11 @@ GET  /api/healthz              → 200 {"status":"ok"}
 GET  /api/profiles             → 200 [{Michael},{Leo}]
 POST /api/sessions/start       → 201 {session}
 POST /api/sessions/:id/end     → 200 {updated session}
-GET  /api/timer/1              → 200 {minutesRemaining: 20}
+GET  /api/timer/1              → 200 {isUnlimited: true, isExpired: false}
 POST /api/attempts             → 201 {attempt}
 GET  /api/stats/1              → 200 {totalCorrect, totalAttempts, moduleBreakdown}
 POST /api/admin/verify-pin     → 200 {valid: true}  (PIN: 1234)
-POST /api/admin/seed           → 201 {profiles seeded}
+POST /api/admin/seed           → 401 without admin bearer token
 ```
 
 ## Known Gaps / Future Work
@@ -78,3 +78,18 @@ POST /api/admin/seed           → 201 {profiles seeded}
 - The api-server esbuild bundle and on-host ISO build target **linux-x64** (Replit/device);
   they cannot run on this arm64 dev sandbox (native-binary pinning), but build on the target unchanged.
 - Background music is Nintendo-copyrighted (owner-supplied) — see `docs/credits.md`; replace before any public/commercial distribution.
+
+---
+
+## Update — 2026-06-09 (time-based blocking removed end-to-end)
+
+Time-based blocking is no longer part of the product (GOAL.md §6/§9, ADR-004).
+Rows above that reference timer behavior describe earlier states of the app.
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `/api/timer/*` endpoints | REMOVED | All timer routes deleted; requests return 404 (regression-tested) |
+| `PATCH /api/profiles/:id` daily-limit editor | REMOVED | Endpoint deleted; returns 404 |
+| Top bar | UPDATED | `TimerBar` → `TopBar`; home + parent-lock buttons only, no timer/"No limit" label |
+| Profile cards | UPDATED | "No limit" badge removed |
+| DB schema | UNCHANGED | `profiles.daily_limit_minutes` retained (unused) — no destructive kiosk migration |

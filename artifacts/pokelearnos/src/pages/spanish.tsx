@@ -1,7 +1,9 @@
 import { ARTWORK, onSpriteError } from "@/lib/sprites";
-import { playCorrect, playWrong, playFanfare, speak } from "@/lib/sound";
+import { playCorrect, playWrong, playFanfare } from "@/lib/sound";
 import { playJingle } from "@/lib/music";
-import { useState, useCallback, useMemo } from "react";
+import { speakText, stopSpeaking, prefetch } from "@/lib/tts";
+import { spokenName } from "@/lib/pronounce";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Star } from "lucide-react";
@@ -35,36 +37,63 @@ export default function SpanishPage() {
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [wrong, setWrong] = useState(false);
 
   const q = questions[idx];
   // Shuffle answer positions per question — the authored choices arrays put
   // the correct answer in a predictable slot.
   const choices = useMemo(() => shuffle(q.choices), [q]);
 
+  // Speak only the Spanish content (the parent found English-then-Spanish
+  // narration confusing) — Vivian pronounces the word, the question stays
+  // on screen as text.
+  useEffect(() => {
+    if (done) return;
+    if (q.spanishWord) void speakText(q.spanishWord, "es");
+    else stopSpeaking();
+  }, [q, done]);
+  useEffect(() => () => stopSpeaking(), []);
+
+  // Warm the audio for this session's words so pronunciation is instant.
+  useEffect(() => {
+    void prefetch(
+      questions.flatMap((qq) =>
+        qq.spanishWord ? [{ text: qq.spanishWord, lang: "es" as const }] : [],
+      ),
+    );
+  }, [questions]);
+
+  const advance = useCallback(() => {
+    if (idx + 1 >= questions.length) { setDone(true); stopSpeaking(); playFanfare(); playJingle(); }
+    else { setIdx(i => i + 1); setSelected(null); setWrong(false); }
+  }, [idx, questions.length]);
+
   const handleAnswer = useCallback(async (choice: string) => {
     if (selected !== null) return;
     setSelected(choice);
     const correct = choice === q.answer;
-    if (correct) { playCorrect(); if (q.spanishWord) speak(q.spanishWord); } else playWrong();
+    if (correct) { playCorrect(); if (q.spanishWord) void speakText(q.spanishWord, "es"); else stopSpeaking(); }
+    // Color-question answers are Pokémon names; spokenName passes Spanish
+    // words through untouched (they aren't map keys).
+    else { playWrong(); void speakText(spokenName(q.answer), "auto"); }
     if (correct) setScore(s => s + 1);
     await logAttempt("spanish", q.id, correct);
     setShowHint(false);
-    setTimeout(() => {
-      if (idx + 1 >= questions.length) { setDone(true); playFanfare(); playJingle(); }
-      else { setIdx(i => i + 1); setSelected(null); }
-    }, 1200);
-  }, [selected, q, idx, questions.length, logAttempt]);
+    // Correct → auto-advance. Wrong → hold on the explanation until "Next".
+    if (correct) setTimeout(advance, 1200);
+    else setWrong(true);
+  }, [selected, q, logAttempt, advance]);
 
   if (done) {
     return (
       <div className="flex flex-col items-center justify-center h-full px-6 text-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-          <img src={SPRITE(133)} alt="Eevee" className="w-64 h-64 mx-auto mb-4 drop-shadow-xl" />
+          <img src={SPRITE(133)} onError={onSpriteError} alt="Eevee" className="w-64 h-64 mx-auto mb-4 drop-shadow-xl" />
           <h2 className="text-5xl font-black text-pokemon-blue mb-2">Excelente!</h2>
           <p className="text-3xl font-bold text-gray-700 mb-6">{score} / {questions.length} correct</p>
           <div className="flex gap-1 justify-center mb-8">
             {questions.map((_, i) => (
-              <Star key={i} size={32} className={i < score ? "text-pokemon-yellow fill-pokemon-yellow" : "text-gray-300"} />
+              <Star key={i} size={45} className={i < score ? "text-pokemon-yellow fill-pokemon-yellow" : "text-gray-300"} />
             ))}
           </div>
           <button
@@ -81,8 +110,8 @@ export default function SpanishPage() {
   return (
     <div className="flex flex-col h-full px-4 py-4">
       <div className="flex items-center gap-4 mb-4">
-        <button onClick={() => navigate("/home")} className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
-          <ArrowLeft size={28} />
+        <button onClick={() => navigate("/home")} className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <ArrowLeft size={40} />
         </button>
         <div className="flex-1">
           <p className="text-lg font-bold text-gray-500">Question {idx + 1} of {questions.length}</p>
@@ -103,8 +132,17 @@ export default function SpanishPage() {
             {q.spanishWord && (
               <div className="text-5xl font-black text-pokemon-blue mb-2">{q.spanishWord.toUpperCase()}</div>
             )}
-            {q.pokemonId && (
-              <img src={SPRITE(q.pokemonId)} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
+            {/* For color questions, show a color swatch — NOT the answer
+                Pokémon's sprite, which would give the answer away. Other
+                question types still show their illustrative Pokémon. */}
+            {q.type === "color" ? (
+              <div
+                className={`${COLOR_CLASSES[q.spanishWord ?? ""] ?? "bg-gray-300"} w-44 h-44 mx-auto mb-2 rounded-full shadow-inner border-8 border-white`}
+              />
+            ) : (
+              q.pokemonId && (
+                <img src={SPRITE(q.pokemonId)} onError={onSpriteError} alt={q.pokemonName} className="w-60 h-60 mx-auto mb-2" />
+              )
             )}
             <p className="text-2xl font-bold text-gray-800">{q.question}</p>
             {showHint && q.hint && (
@@ -129,7 +167,7 @@ export default function SpanishPage() {
                     onClick={() => handleAnswer(choice)}
                     className={`bg-white rounded-3xl p-3 shadow flex flex-col items-center gap-1 ${ring} transition-all min-h-[120px]`}
                   >
-                    <img src={SPRITE(pokId)} alt={choice} className="w-44 h-44 object-contain" />
+                    <img src={SPRITE(pokId)} onError={onSpriteError} alt={choice} className="w-44 h-44 object-contain" />
                     <span className="text-lg font-black text-gray-800">{choice}</span>
                   </motion.button>
                 );
@@ -156,7 +194,25 @@ export default function SpanishPage() {
             </div>
           )}
 
-          {!showHint && q.hint && selected === null && (
+          {wrong && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-5 w-full bg-amber-50 border-4 border-amber-200 rounded-3xl p-5 text-center"
+            >
+              <p className="text-xl font-black text-amber-700 mb-1">Not quite!</p>
+              <p className="text-2xl font-black text-gray-800 mb-1">The answer is {q.answer}.</p>
+              {q.hint && <p className="text-xl font-bold text-pokemon-blue mb-4">{q.hint}</p>}
+              <button
+                onClick={advance}
+                className="bg-pokemon-blue text-white text-2xl font-black px-10 py-4 rounded-2xl shadow min-h-[68px]"
+              >
+                Next →
+              </button>
+            </motion.div>
+          )}
+
+          {!wrong && !showHint && q.hint && selected === null && (
             <button
               onClick={() => setShowHint(true)}
               className="mt-4 text-lg font-bold text-pokemon-blue underline"
