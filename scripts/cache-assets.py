@@ -24,10 +24,13 @@ DEST = os.path.join(
 CDN = ("https://raw.githubusercontent.com/PokeAPI/sprites/master/"
        "sprites/pokemon/other/official-artwork/{id}.png")
 
-# Curated set: app content + Pokédex screen + avatars.
+# Curated set: app content + Pokédex screen + avatars + home-tile mascots
+# (65 Alakazam=Memory, 100 Voltorb=Dots, 201 Unown=Tracing, 235 Smeargle=
+# Coloring, 385 Jirachi=Progress, 479 Rotom=Pokédex).
 DEFAULT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 25, 26, 35, 37, 39, 40, 52, 53, 54,
-               55, 58, 60, 79, 87, 92, 94, 113, 129, 130, 131, 133, 143, 145,
-               147, 148, 149, 150, 151, 172, 175, 196, 197, 448, 778, 882]
+               55, 58, 60, 65, 79, 87, 92, 94, 100, 113, 129, 130, 131, 133,
+               143, 145, 147, 148, 149, 150, 151, 172, 175, 196, 197, 201,
+               235, 385, 448, 479, 778, 882]
 
 
 # National Dex covers ids 1..1025 (through Gen 9). The full Pokédex screen

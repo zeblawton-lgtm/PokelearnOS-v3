@@ -24,14 +24,18 @@ const subjects = [
   },
 ];
 
+// Each fun tile gets its own thematic Pokémon mascot (bundled artwork):
+// Smeargle paints, Unown is the letter Pokémon, Voltorb is a dot, Alakazam
+// is the genius, Rotom powers the Pokédex, Lapras ferries explorers, and
+// Jirachi is the wishing star on the gold Progress tile.
 const fun = [
-  { id: "coloring", label: "Coloring", emoji: "🎨", path: "/coloring", gold: false },
-  { id: "tracing", label: "Tracing", emoji: "✏️", path: "/tracing", gold: false },
-  { id: "dots", label: "Dots", emoji: "🔵", path: "/dots", gold: false },
-  { id: "match", label: "Memory", emoji: "🧠", path: "/match", gold: false },
-  { id: "pokedex", label: "Pokédex", emoji: "📕", path: "/pokedex", gold: false },
-  { id: "regions", label: "Regions", emoji: "🗺️", path: "/regions", gold: false },
-  { id: "progress", label: "Progress", emoji: "🏆", path: "/progress", gold: true },
+  { id: "coloring", label: "Coloring", pokemonId: 235, path: "/coloring", gold: false },
+  { id: "tracing", label: "Tracing", pokemonId: 201, path: "/tracing", gold: false },
+  { id: "dots", label: "Dots", pokemonId: 100, path: "/dots", gold: false },
+  { id: "match", label: "Memory", pokemonId: 65, path: "/match", gold: false },
+  { id: "pokedex", label: "Pokédex", pokemonId: 479, path: "/pokedex", gold: false },
+  { id: "regions", label: "Regions", pokemonId: 131, path: "/regions", gold: false },
+  { id: "progress", label: "Progress", pokemonId: 385, path: "/progress", gold: true },
 ];
 
 // A soft cartoon cloud drifting across the sky. Built from plain divs so it
@@ -86,15 +90,15 @@ export default function Home() {
           src={SPRITE(profile?.avatarPokemonId ?? 25)}
           onError={onSpriteError}
           alt=""
-          className="w-28 h-28 object-contain drop-shadow-xl"
+          className="w-36 h-36 object-contain drop-shadow-xl"
           animate={{ y: [0, -12, 0] }}
           transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
           draggable={false}
         />
         <div className="relative bg-white rounded-3xl px-7 py-4" style={{ boxShadow: "0 5px 0 rgba(0,0,0,0.08)" }}>
           <div aria-hidden className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rotate-45" />
-          <h1 className="text-4xl font-black text-gray-800 leading-tight">Hi, {profile?.name}!</h1>
-          <p className="text-lg font-bold text-gray-500">Tap a friend to start learning</p>
+          <h1 className="text-5xl font-black text-gray-800 leading-tight">Hi, {profile?.name}!</h1>
+          <p className="text-xl font-bold text-gray-500">Tap a friend to start learning</p>
         </div>
 
         <button
@@ -109,7 +113,7 @@ export default function Home() {
 
       {/* Subject type cards — artwork intentionally overflows the card top */}
       <div className="flex-1 flex items-center justify-center min-h-0">
-        <div className="flex gap-8 justify-center items-stretch w-full max-w-5xl mt-10">
+        <div className="flex gap-10 justify-center items-stretch w-full max-w-6xl mt-14">
           {subjects.map((s, i) => (
             <motion.button
               key={s.id}
@@ -118,22 +122,22 @@ export default function Home() {
               transition={{ delay: i * 0.08, type: "spring", stiffness: 200 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => go(s.path)}
-              className="flex-1 max-w-[340px] rounded-[30px] px-4 pb-6 text-white flex flex-col items-center gap-2"
+              className="flex-1 max-w-[430px] rounded-[36px] px-5 pb-8 text-white flex flex-col items-center gap-3"
               style={{ background: s.gradient, boxShadow: s.shadow }}
             >
               <motion.img
                 src={SPRITE(s.pokemonId)}
                 onError={onSpriteError}
                 alt=""
-                className="w-36 h-36 object-contain -mt-12"
+                className="w-56 h-56 object-contain -mt-16"
                 style={{ filter: "drop-shadow(0 6px 5px rgba(0,0,0,0.25))" }}
                 whileHover={{ scale: 1.08, rotate: -3 }}
                 draggable={false}
               />
-              <span className="text-4xl font-black" style={{ textShadow: "0 2px 0 rgba(0,0,0,0.18)" }}>
+              <span className="text-5xl font-black" style={{ textShadow: "0 2px 0 rgba(0,0,0,0.18)" }}>
                 {s.label}
               </span>
-              <span className="bg-white/30 rounded-full px-5 py-1 text-lg font-bold">{s.typePill}</span>
+              <span className="bg-white/30 rounded-full px-6 py-1.5 text-xl font-bold">{s.typePill}</span>
             </motion.button>
           ))}
         </div>
@@ -149,7 +153,7 @@ export default function Home() {
             transition={{ delay: 0.3 + i * 0.05, type: "spring", stiffness: 220 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => go(f.path)}
-            className={`w-[150px] h-[120px] rounded-3xl flex flex-col items-center justify-center gap-1 text-lg font-black ${
+            className={`w-[210px] h-[180px] rounded-3xl flex flex-col items-center justify-center gap-1 text-2xl font-black ${
               f.gold ? "text-amber-900" : "text-gray-700"
             }`}
             style={{
@@ -157,7 +161,14 @@ export default function Home() {
               boxShadow: f.gold ? "0 6px 0 #d99e16" : "0 6px 0 rgba(0,0,0,0.1)",
             }}
           >
-            <span className="text-4xl leading-none" aria-hidden>{f.emoji}</span>
+            <img
+              src={SPRITE(f.pokemonId)}
+              onError={onSpriteError}
+              alt=""
+              className="w-28 h-28 object-contain"
+              style={{ filter: "drop-shadow(0 4px 3px rgba(0,0,0,0.18))" }}
+              draggable={false}
+            />
             {f.label}
           </motion.button>
         ))}

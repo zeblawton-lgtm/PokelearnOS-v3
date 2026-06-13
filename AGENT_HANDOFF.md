@@ -31,8 +31,11 @@ Note: the local branch has no upstream tracking configured, so
      backdrop with drifting CSS clouds, the child's own avatar bouncing next
      to a "Hi, {name}!" speech bubble, three Pokémon "type cards" for the
      subjects (Charmander/fire = Math, Squirtle/water = Spanish,
-     Bulbasaur/grass = World), and a chunky white emoji fun-row (creative
-     corner + Pokédex/Regions/gold Progress). All assets bundled (no web
+     Bulbasaur/grass = World), and a chunky white fun-row where every tile
+     has a thematic Pokémon mascot (Smeargle=Coloring, Unown=Tracing,
+     Voltorb=Dots, Alakazam=Memory, Rotom=Pokédex, Lapras=Regions,
+     Jirachi=gold Progress — six new artwork PNGs added via
+     cache-assets.py + manifest regen). All assets bundled (no web
      fonts/sprites); touch targets ≥ 88 px kept. The mockup's Poké-ball
      reward meter / catch-reveal flow was deliberately NOT built (new game
      economy — needs an owner decision + ADR if wanted).
